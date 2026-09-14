@@ -289,7 +289,7 @@
 <header class="hero">
   <div class="wrap">
     <h1 class="title">Missão Reforma<br><em>Tributária</em></h1>
-    <p class="lede">CBS, IBS, Split Payment, alíquotas... Percorra as 6 fases da trilha para entender a reforma na prática e depois encare a provinha final.</p>
+    <p class="lede">CBS, IBS, Split Payment, alíquotas... Percorra as 6 fases da trilha para compreender a reforma na prática e, em seguida, realize o teste final.</p>
     <button class="cta" onclick="document.getElementById('trilha').scrollIntoView()">
       Começar a explorar
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" width="16" height="16"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
@@ -310,23 +310,23 @@
     <div class="section-head">
       <div class="section-eyebrow">A TRILHA</div>
       <h2>Seis fases até dominar a reforma</h2>
-      <p>Clique em cada estação para abrir o conteúdo. As estações viram verdes conforme você avança — isso também libera a provinha lá embaixo.</p>
+      <p>Clique em cada estação para abrir o conteúdo. As estações ficam verdes conforme você avança — isso também libera o teste ao final.</p>
     </div>
     <div class="trail" id="trail-container"></div>
   </section>
 
   <section class="block" id="prova">
     <div class="section-head">
-      <div class="section-eyebrow">PROVINHA</div>
-      <h2>Teste o que você aprendeu</h2>
-      <p>10 perguntas sobre os assuntos gerais da reforma — incluindo aquela clássica: quem substitui o quê.</p>
+      <div class="section-eyebrow">TESTE</div>
+      <h2>Avalie o que você aprendeu</h2>
+      <p>10 perguntas sobre os assuntos gerais da reforma, incluindo a distinção entre os tributos federais e os estaduais/municipais.</p>
     </div>
     <div class="quiz-shell">
       <div class="quiz-intro" id="quiz-intro">
-        <h3>Pronto pra jogar?</h3>
-        <p>São 10 perguntas de múltipla escolha, uma de cada vez, com correção na hora. No final você vê sua pontuação.</p>
-        <p id="quiz-lock-msg" class="lock-msg">Explore as 6 fases da trilha lá em cima para liberar a provinha.</p>
-        <button class="start-quiz" id="start-quiz-btn" disabled>Iniciar provinha</button>
+        <h3>Pronto para começar?</h3>
+        <p>São 10 perguntas de múltipla escolha, apresentadas uma de cada vez, com correção imediata. Ao final, você verá sua pontuação.</p>
+        <p id="quiz-lock-msg" class="lock-msg">Explore as 6 fases da trilha acima para liberar o teste.</p>
+        <button class="start-quiz" id="start-quiz-btn" disabled>Iniciar teste</button>
       </div>
       <div id="quiz-stage" style="display:none;"></div>
     </div>
@@ -334,9 +334,7 @@
 
 </main>
 
-<footer>
-  Conteúdo baseado na apresentação "Reforma Tributária: A Reforma Tributária do Consumo" — Grant Thornton Brasil, Agosto de 2026, preparada para a Rede Américas. Uso interno e educativo.
-</footer>
+
 
 <script>
 /* ---------------- ícones ---------------- */
@@ -530,11 +528,11 @@ function updateProgress(){
   const lockMsg = document.getElementById('quiz-lock-msg');
   if (visited >= total) {
     startBtn.disabled = false;
-    lockMsg.textContent = 'Trilha completa — pode começar!';
+    lockMsg.textContent = 'Trilha concluída — o teste está disponível.';
     lockMsg.classList.add('done');
   } else {
     startBtn.disabled = true;
-    lockMsg.textContent = `Explore as ${total} fases da trilha lá em cima para liberar a provinha (${visited}/${total}).`;
+    lockMsg.textContent = `Explore as ${total} fases da trilha acima para liberar o teste (${visited}/${total}).`;
     lockMsg.classList.remove('done');
   }
 }
@@ -687,17 +685,17 @@ function renderResult(){
   const total = quiz.length;
   const pct = Math.round(score/total*100);
   let title, msg;
-  if (pct >= 90) { title = "Mestre da Reforma 🏆"; msg = "Você manda muito bem nesse assunto — dá até pra explicar pro resto da equipe."; }
-  else if (pct >= 70) { title = "Já manja bastante"; msg = "Boa! Só vale repassar as fases que ficaram menos claras."; }
-  else if (pct >= 40) { title = "No caminho certo"; msg = "Bom começo — volte à trilha e revise as fases com mais calma."; }
-  else { title = "Hora de revisar a trilha"; msg = "Sem problema, o assunto é denso. Reabra as fases lá em cima e tente de novo."; }
+  if (pct >= 90) { title = "Domínio completo"; msg = "Excelente resultado — você demonstra sólido conhecimento sobre o tema."; }
+  else if (pct >= 70) { title = "Bom domínio do tema"; msg = "Bom resultado. Vale revisar as fases relacionadas às questões em que houve dúvida."; }
+  else if (pct >= 40) { title = "No caminho certo"; msg = "Resultado razoável. Recomenda-se revisar as fases da trilha com mais atenção."; }
+  else { title = "Recomenda-se revisão"; msg = "O tema é denso — reabra as fases da trilha acima e refaça o teste em seguida."; }
   stage.innerHTML = `
     <div class="result">
       <div class="q-progress">Resultado final</div>
       <div class="score">${score}/${total}</div>
       <h3>${title}</h3>
       <p>${msg}</p>
-      <button class="redo" id="redo-btn">Refazer a provinha</button>
+      <button class="redo" id="redo-btn">Refazer o teste</button>
     </div>
   `;
   document.getElementById('redo-btn').addEventListener('click', () => {
