@@ -1,0 +1,692 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Missão Reforma Tributária</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg-deep:#3a0f4d;
+    --bg-panel:#4c1861;
+    --bg-panel-2:#5a1e70;
+    --purple-700:#642277;
+    --purple-600:#733494;
+    --purple-500:#864893;
+    --purple-400:#a368aa;
+    --lilac-300:#cc97cc;
+    --lilac-200:#d4abcc;
+    --sand:#b3b394;
+    --green:#76c42b;
+    --rose:#e2637a;
+    --text-hi:#f8f2f6;
+    --text-lo:#d9c3dd;
+    --line:rgba(212,171,204,0.28);
+    --radius:18px;
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    margin:0;
+    font-family:'Outfit',sans-serif;
+    background:
+      radial-gradient(circle at 12% 8%, rgba(118,196,43,0.10), transparent 38%),
+      radial-gradient(circle at 88% 4%, rgba(204,151,204,0.14), transparent 42%),
+      radial-gradient(circle at 50% 100%, rgba(100,34,119,0.35), transparent 55%),
+      var(--bg-deep);
+    color:var(--text-hi);
+    min-height:100vh;
+    -webkit-font-smoothing:antialiased;
+  }
+  .dots{
+    position:fixed; inset:0; pointer-events:none; z-index:0; opacity:.5;
+    background-image:radial-gradient(var(--lilac-300) 1px, transparent 1.4px);
+    background-size:34px 34px;
+    mask-image:radial-gradient(ellipse 80% 60% at 50% 0%, black, transparent 70%);
+  }
+  a{color:inherit;}
+  .wrap{max-width:920px; margin:0 auto; padding:0 24px; position:relative; z-index:1;}
+
+  /* ---------- HERO ---------- */
+  .hero{padding:76px 0 54px; text-align:center;}
+  .kicker{
+    display:inline-flex; align-items:center; gap:8px;
+    font-size:14px; letter-spacing:.02em; color:var(--sand);
+    background:rgba(179,179,148,0.12); border:1px solid rgba(179,179,148,0.35);
+    padding:6px 14px; border-radius:999px; margin-bottom:26px;
+  }
+  .kicker svg{width:14px; height:14px;}
+  h1.title{
+    font-size:clamp(38px,6vw,64px); font-weight:800; line-height:1.03;
+    margin:0 0 18px; letter-spacing:-0.02em;
+  }
+  h1.title em{
+    font-style:normal;
+    background:linear-gradient(100deg, var(--lilac-200), var(--green) 120%);
+    -webkit-background-clip:text; background-clip:text; color:transparent;
+  }
+  .hero p.lede{
+    max-width:560px; margin:0 auto 36px; font-size:18px; line-height:1.6;
+    color:var(--text-lo); font-weight:300;
+  }
+  .cta{
+    display:inline-flex; align-items:center; gap:10px;
+    background:var(--green); color:#132900; font-weight:600; font-size:16px;
+    border:none; padding:15px 28px; border-radius:999px; cursor:pointer;
+    box-shadow:0 10px 30px -8px rgba(118,196,43,0.55);
+    transition:transform .15s ease, box-shadow .15s ease;
+  }
+  .cta:hover{transform:translateY(-2px); box-shadow:0 14px 34px -6px rgba(118,196,43,0.65);}
+  .cta:focus-visible{outline:3px solid var(--lilac-200); outline-offset:3px;}
+
+  /* ---------- PROGRESS BAR ---------- */
+  .progress-bar{
+    position:sticky; top:0; z-index:5;
+    backdrop-filter:blur(10px);
+    background:rgba(58,15,77,0.86);
+    border-bottom:1px solid var(--line);
+    padding:12px 0;
+  }
+  .progress-inner{
+    max-width:920px; margin:0 auto; padding:0 24px;
+    display:flex; align-items:center; gap:14px; font-size:14px;
+  }
+  .progress-track{
+    flex:1; height:8px; border-radius:999px; background:rgba(212,171,204,0.15); overflow:hidden;
+  }
+  .progress-fill{
+    height:100%; width:0%; border-radius:999px;
+    background:linear-gradient(90deg, var(--purple-400), var(--green));
+    transition:width .4s ease;
+  }
+  .progress-label{white-space:nowrap; color:var(--text-lo); font-weight:500;}
+  .progress-label b{color:var(--green);}
+
+  /* ---------- SECTION HEADS ---------- */
+  section.block{padding:64px 0 8px;}
+  .section-head{margin-bottom:36px;}
+  .section-eyebrow{font-size:13px; color:var(--green); font-weight:600; margin-bottom:10px;}
+  .section-head h2{font-size:clamp(26px,4vw,36px); font-weight:700; margin:0 0 10px; letter-spacing:-0.01em;}
+  .section-head p{color:var(--text-lo); font-size:16px; line-height:1.6; max-width:620px; font-weight:300; margin:0;}
+
+  /* ---------- TRILHA ---------- */
+  .trail{position:relative; padding:12px 0 40px;}
+  .trail::before{
+    content:""; position:absolute; left:29px; top:6px; bottom:6px; width:2px;
+    background:repeating-linear-gradient(to bottom, var(--lilac-300) 0 10px, transparent 10px 20px);
+    opacity:.55;
+  }
+  @media(min-width:760px){
+    .trail::before{left:50%; transform:translateX(-1px);}
+  }
+
+  details.phase{
+    position:relative; margin:0 0 26px; list-style:none;
+  }
+  details.phase summary{list-style:none; cursor:pointer;}
+  details.phase summary::-webkit-details-marker{display:none;}
+
+  .phase-row{
+    display:flex; align-items:flex-start; gap:18px;
+  }
+  @media(min-width:760px){
+    details.phase:nth-of-type(even) .phase-row{flex-direction:row-reverse; text-align:right;}
+    details.phase:nth-of-type(even) .phase-card{margin-right:auto;}
+  }
+
+  .node{
+    flex:none; width:60px; height:60px; border-radius:50%;
+    background:var(--bg-panel-2); border:2px solid var(--purple-500);
+    display:flex; align-items:center; justify-content:center;
+    font-weight:700; font-size:20px; color:var(--lilac-200);
+    position:relative; z-index:2; transition:all .2s ease;
+  }
+  .node .check{display:none;}
+  details.phase[data-visited="true"] .node{
+    background:var(--green); border-color:var(--green); color:#132900;
+  }
+  details.phase[data-visited="true"] .node .num{display:none;}
+  details.phase[data-visited="true"] .node .check{display:block;}
+  .node svg{width:24px; height:24px;}
+
+  .phase-card{
+    flex:1; min-width:0;
+    background:var(--bg-panel); border:1px solid var(--line); border-radius:var(--radius);
+    padding:20px 24px; transition:border-color .2s ease, background .2s ease;
+  }
+  details.phase[open] .phase-card{border-color:var(--purple-400); background:var(--bg-panel-2);}
+  .phase-card:hover{border-color:var(--purple-400);}
+  .phase-tag{font-size:12.5px; color:var(--sand); font-weight:600; margin-bottom:4px;}
+  .phase-title{font-size:20px; font-weight:700; margin:0; display:flex; align-items:center; gap:10px; justify-content:space-between;}
+  @media(min-width:760px){
+    details.phase:nth-of-type(even) .phase-title{flex-direction:row-reverse;}
+  }
+  .chev{width:18px; height:18px; flex:none; transition:transform .2s ease; color:var(--lilac-300);}
+  details.phase[open] .chev{transform:rotate(180deg);}
+
+  .phase-body{
+    padding-top:16px; margin-top:14px; border-top:1px solid var(--line);
+    color:var(--text-lo); font-size:15.5px; line-height:1.65; font-weight:300;
+    text-align:left;
+  }
+  .phase-body h4{color:var(--text-hi); font-size:15px; font-weight:600; margin:18px 0 8px;}
+  .phase-body h4:first-child{margin-top:0;}
+  .phase-body ul{margin:0 0 4px; padding-left:20px;}
+  .phase-body li{margin-bottom:6px;}
+  .phase-body strong{color:var(--text-hi); font-weight:600;}
+
+  .stat-row{display:flex; flex-wrap:wrap; gap:10px; margin:6px 0 14px;}
+  .chip{
+    display:inline-flex; align-items:baseline; gap:6px;
+    background:rgba(118,196,43,0.10); border:1px solid rgba(118,196,43,0.35);
+    padding:8px 14px; border-radius:12px; font-size:13.5px; color:var(--text-lo);
+  }
+  .chip b{font-size:20px; font-weight:700; color:var(--green);}
+  .chip.alt{background:rgba(163,104,170,0.14); border-color:rgba(163,104,170,0.4);}
+  .chip.alt b{color:var(--lilac-200);}
+
+  .callout{
+    background:rgba(226,99,122,0.09); border:1px solid rgba(226,99,122,0.35);
+    border-radius:14px; padding:14px 18px; margin:14px 0; font-size:15px;
+  }
+  .callout b{color:var(--rose);}
+
+  .pyramid{display:flex; flex-direction:column; gap:6px; margin:10px 0 18px;}
+  .pyramid .lvl{
+    background:var(--purple-600); border-radius:10px; padding:10px 14px; font-size:14px;
+    display:flex; gap:10px; align-items:baseline;
+  }
+  .pyramid .lvl span.n{font-weight:800; color:var(--lilac-200); font-size:15px;}
+
+  .years{display:grid; grid-template-columns:repeat(auto-fill,minmax(118px,1fr)); gap:10px; margin:10px 0 18px;}
+  .year-card{
+    background:rgba(163,104,170,0.10); border:1px solid var(--line); border-radius:12px;
+    padding:10px 12px; font-size:12.8px; line-height:1.45;
+  }
+  .year-card .y{font-weight:800; color:var(--green); font-size:16px; display:block; margin-bottom:4px;}
+
+  .grid-cards{display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:12px; margin:10px 0 6px;}
+  .mini-card{
+    background:rgba(212,171,204,0.06); border:1px solid var(--line); border-radius:12px; padding:12px 14px;
+  }
+  .mini-card .mc-title{font-weight:600; color:var(--text-hi); font-size:14.5px; margin-bottom:4px;}
+  .mini-card ul{margin:4px 0 0; padding-left:16px; font-size:13.5px;}
+
+  .tag-cloud{display:flex; flex-wrap:wrap; gap:8px; margin-top:8px;}
+  .tag-cloud span{
+    background:rgba(212,171,204,0.10); border:1px solid var(--line); padding:5px 12px;
+    border-radius:999px; font-size:13px; color:var(--lilac-200);
+  }
+
+  /* ---------- QUIZ ---------- */
+  .quiz-shell{
+    background:var(--bg-panel); border:1px solid var(--line); border-radius:24px;
+    padding:34px; margin:28px 0 80px; position:relative; overflow:hidden;
+  }
+  .quiz-shell::before{
+    content:""; position:absolute; top:-60px; right:-60px; width:200px; height:200px;
+    background:radial-gradient(circle, rgba(118,196,43,0.18), transparent 70%);
+  }
+  .quiz-intro{position:relative; z-index:1;}
+  .quiz-intro h3{font-size:24px; margin:0 0 10px;}
+  .quiz-intro p{color:var(--text-lo); font-weight:300; line-height:1.6; margin:0 0 22px;}
+  .start-quiz{
+    background:var(--purple-500); color:#fff; border:none; font-weight:600; font-size:15.5px;
+    padding:13px 24px; border-radius:999px; cursor:pointer;
+  }
+  .start-quiz:hover{background:var(--purple-400);}
+
+  #quiz-stage{position:relative; z-index:1;}
+  .q-progress{font-size:13px; color:var(--sand); font-weight:600; margin-bottom:8px; letter-spacing:.02em;}
+  .q-text{font-size:21px; font-weight:600; line-height:1.4; margin:0 0 22px;}
+  .options{display:flex; flex-direction:column; gap:10px;}
+  .opt{
+    text-align:left; background:rgba(212,171,204,0.06); border:1px solid var(--line);
+    color:var(--text-hi); padding:14px 16px; border-radius:12px; font-size:15px; font-family:inherit;
+    cursor:pointer; transition:border-color .15s ease, background .15s ease;
+  }
+  .opt:hover:not(:disabled){border-color:var(--lilac-300);}
+  .opt:focus-visible{outline:3px solid var(--lilac-200); outline-offset:2px;}
+  .opt:disabled{cursor:default;}
+  .opt.correct{background:rgba(118,196,43,0.16); border-color:var(--green);}
+  .opt.incorrect{background:rgba(226,99,122,0.14); border-color:var(--rose);}
+  .opt.dim{opacity:.5;}
+
+  .explain{
+    margin-top:18px; padding:14px 16px; border-radius:12px; font-size:14.5px; line-height:1.55;
+    background:rgba(212,171,204,0.07); border:1px solid var(--line); color:var(--text-lo);
+  }
+  .explain b{color:var(--text-hi);}
+  .next-btn{
+    margin-top:20px; background:var(--green); color:#132900; border:none; font-weight:700;
+    padding:12px 22px; border-radius:999px; cursor:pointer; font-size:15px;
+  }
+
+  .result{text-align:center; padding:10px 0;}
+  .result .score{font-size:56px; font-weight:800; color:var(--green); margin:6px 0;}
+  .result h3{font-size:24px; margin:16px 0 8px;}
+  .result p{color:var(--text-lo); max-width:460px; margin:0 auto 24px; font-weight:300; line-height:1.6;}
+  .redo{
+    background:transparent; border:1.5px solid var(--lilac-300); color:var(--lilac-200);
+    padding:11px 22px; border-radius:999px; cursor:pointer; font-weight:600; font-size:14.5px;
+  }
+  .redo:hover{background:rgba(204,151,204,0.1);}
+
+  footer{
+    text-align:center; padding:30px 24px 50px; color:var(--text-lo); font-size:12.5px;
+    opacity:.65; font-weight:300; position:relative; z-index:1;
+  }
+</style>
+</head>
+<body>
+<div class="dots"></div>
+
+<header class="hero">
+  <div class="wrap">
+    <h1 class="title">Missão Reforma<br><em>Tributária</em></h1>
+    <p class="lede">CBS, IBS, Split Payment, alíquotas... Percorra as 6 fases da trilha para entender a reforma na prática e depois encare a provinha final.</p>
+    <button class="cta" onclick="document.getElementById('trilha').scrollIntoView()">
+      Começar a explorar
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" width="16" height="16"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+    </button>
+  </div>
+</header>
+
+<div class="progress-bar">
+  <div class="progress-inner">
+    <span class="progress-label">Fases exploradas: <b id="visited-count">0</b>/6</span>
+    <div class="progress-track"><div class="progress-fill" id="progress-fill"></div></div>
+  </div>
+</div>
+
+<main class="wrap">
+
+  <section class="block" id="trilha">
+    <div class="section-head">
+      <div class="section-eyebrow">A TRILHA</div>
+      <h2>Seis fases até dominar a reforma</h2>
+      <p>Clique em cada estação para abrir o conteúdo. As estações viram verdes conforme você avança — isso também libera a provinha lá embaixo.</p>
+    </div>
+    <div class="trail" id="trail-container"></div>
+  </section>
+
+  <section class="block" id="prova">
+    <div class="section-head">
+      <div class="section-eyebrow">PROVINHA</div>
+      <h2>Teste o que você aprendeu</h2>
+      <p>10 perguntas sobre os assuntos gerais da reforma — incluindo aquela clássica: quem substitui o quê.</p>
+    </div>
+    <div class="quiz-shell">
+      <div class="quiz-intro" id="quiz-intro">
+        <h3>Pronto pra jogar?</h3>
+        <p>São 10 perguntas de múltipla escolha, uma de cada vez, com correção na hora. No final você vê sua pontuação.</p>
+        <button class="start-quiz" id="start-quiz-btn">Iniciar provinha</button>
+      </div>
+      <div id="quiz-stage" style="display:none;"></div>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  Conteúdo baseado na apresentação "Reforma Tributária: A Reforma Tributária do Consumo" — Grant Thornton Brasil, Agosto de 2026, preparada para a Rede Américas. Uso interno e educativo.
+</footer>
+
+<script>
+/* ---------------- ícones ---------------- */
+const ICONS = {
+  doc:`<path d="M7 3h7l5 5v13H7z"/><path d="M14 3v5h5"/><path d="M9.5 13h5M9.5 16.5h5"/>`,
+  swap:`<path d="M4 8h13"/><path d="M13 4l4 4-4 4"/><path d="M20 16H7"/><path d="M11 12l-4 4 4 4"/>`,
+  compass:`<circle cx="12" cy="12" r="9"/><path d="M14.5 9.5L10 14l1.5-4.5L15.9 8z"/>`,
+  time:`<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/>`,
+  percent:`<circle cx="7" cy="7" r="2.4"/><circle cx="17" cy="17" r="2.4"/><path d="M18 6L6 18"/>`,
+  grid:`<rect x="3" y="3" width="7" height="7" rx="1.4"/><rect x="14" y="3" width="7" height="7" rx="1.4"/><rect x="3" y="14" width="7" height="7" rx="1.4"/><rect x="14" y="14" width="7" height="7" rx="1.4"/>`
+};
+function iconSvg(key){return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${ICONS[key]}</svg>`;}
+
+/* ---------------- conteúdo das fases ---------------- */
+const phases = [
+  {
+    tag:"Fase 1 · Contexto",
+    title:"O que é a Reforma Tributária",
+    icon:"doc",
+    html:`
+      <p>A Reforma Tributária do consumo foi <strong>instituída pela Emenda Constitucional nº 132/2023</strong> e regulamentada principalmente pela <strong>Lei Complementar nº 214/2025</strong>. É uma das mudanças mais profundas do sistema tributário brasileiro em décadas.</p>
+      <h4>Objetivo</h4>
+      <p>Simplificar, modernizar e tornar mais transparente a tributação sobre o consumo de bens e serviços, substituindo um modelo historicamente complexo e fragmentado — guiado por 4 princípios: <strong>Neutralidade, Não Cumulatividade, Transparência e Simplicidade</strong>.</p>
+      <h4>A pirâmide normativa</h4>
+      <div class="pyramid">
+        <div class="lvl"><span class="n">1º</span> Emenda Constitucional 132/2023</div>
+        <div class="lvl"><span class="n">2º</span> Leis Complementares 214/2025 e 227/2026</div>
+        <div class="lvl"><span class="n">3º</span> Regulamento de CBS e Regulamento de IBS</div>
+        <div class="lvl"><span class="n">4º</span> Ato Conjunto RFB e Comitê Gestor</div>
+      </div>
+      <p>O regulamento do CBS e do IBS foi publicado em <strong>30/04/2026</strong>, detalhando a operacionalização para 2027 — incluindo o mecanismo de <strong>Split Payment</strong>. Já o Ajuste Sinief 49/2025 define as notas de débito e crédito para a apuração assistida, com aplicação prorrogada para 01/08/2026.</p>
+    `
+  },
+  {
+    tag:"Fase 2 · O mecanismo central",
+    title:"IVA Dual: CBS e IBS",
+    icon:"swap",
+    html:`
+      <p>O Brasil adota o modelo <strong>IVA Dual</strong>: dois tributos sobre valor agregado, um federal e outro subnacional, mais um imposto seletivo federal.</p>
+      <div class="callout"><b>A pergunta que todo mundo faz:</b> qual tributo substitui o quê?<br>
+      <strong>CBS</strong> (Contribuição sobre Bens e Serviços) é <strong>federal</strong> e substitui <strong>PIS e Cofins</strong>.<br>
+      <strong>IBS</strong> (Imposto sobre Bens e Serviços) é <strong>subnacional</strong> (estados e municípios) e substitui <strong>ICMS e ISS</strong>.</div>
+      <div class="grid-cards">
+        <div class="mini-card">
+          <div class="mc-title">CBS — Federal</div>
+          <ul><li>Substitui PIS e Cofins</li><li>Convive com o IPI, que vai a 0% (exceto na Zona Franca de Manaus)</li></ul>
+        </div>
+        <div class="mini-card">
+          <div class="mc-title">IBS — Subnacional</div>
+          <ul><li>Substitui ICMS (estadual) e ISS (municipal)</li><li>Arrecadação vai para estados e municípios</li></ul>
+        </div>
+        <div class="mini-card">
+          <div class="mc-title">IS — Imposto Seletivo</div>
+          <ul><li>Tributo federal novo</li><li>Incide sobre bens prejudiciais à saúde ou ao meio ambiente</li></ul>
+        </div>
+      </div>
+      <h4>Para comparar: alíquota média de IVA pelo mundo</h4>
+      <div class="stat-row">
+        <div class="chip alt"><b>21%</b> União Europeia</div>
+        <div class="chip alt"><b>25%</b> Suécia e Dinamarca</div>
+        <div class="chip alt"><b>5%</b> Canadá</div>
+        <div class="chip alt"><b>27%</b> Hungria (maior do mundo)</div>
+      </div>
+    `
+  },
+  {
+    tag:"Fase 3 · Regras do jogo",
+    title:"Princípios e pilares",
+    icon:"compass",
+    html:`
+      <h4>4 pilares estruturais</h4>
+      <div class="grid-cards">
+        <div class="mini-card"><div class="mc-title">Não cumulatividade plena</div><ul><li>Creditamento dos tributos pagos nas etapas anteriores da cadeia, exceto bens/serviços de uso ou consumo pessoal</li></ul></div>
+        <div class="mini-card"><div class="mc-title">Tributação "por fora" (gross-up)</div><ul><li>CBS e IBS não integram a própria base de cálculo nem incidem um sobre o outro</li></ul></div>
+        <div class="mini-card"><div class="mc-title">Tributação no destino</div><ul><li>O IBS é pago ao estado e município de destino — onde ocorre o consumo final</li></ul></div>
+        <div class="mini-card"><div class="mc-title">Base ampla de incidência</div><ul><li>Alcança todas as operações com bens (tangíveis e intangíveis) e serviços</li></ul></div>
+      </div>
+      <h4>O que incide e o que não incide</h4>
+      <p>O Artigo 4º da LC 214/2025 diz que CBS e IBS incidem sobre <strong>operações onerosas</strong> envolvendo bens ou serviços (venda, locação, licenciamento, mútuo oneroso, arrendamento, prestação de serviços, entre outras).</p>
+      <p><strong>Não incidem</strong> sobre: serviços de pessoa física em relação de emprego, transferências entre estabelecimentos do mesmo contribuinte, fusões/cisões/incorporações, doações sem contraprestação, rendimentos financeiros (fora do regime específico) e dividendos/JCP recebidos.</p>
+    `
+  },
+  {
+    tag:"Fase 4 · Linha do tempo",
+    title:"A transição, ano a ano",
+    icon:"time",
+    html:`
+      <p>A troca não é da noite pro dia: o sistema antigo (PIS/Cofins, ICMS, IPI, ISS) convive com o novo (CBS/IBS) por vários anos, em alíquotas crescentes de teste.</p>
+      <div class="years">
+        <div class="year-card"><span class="y">2025</span>Homologação dos sistemas de DFe. Testes iniciais: IBS 0,1% e CBS 0,9%.</div>
+        <div class="year-card"><span class="y">2026</span>PIS/Cofins, ICMS, IPI e ISS ainda plenamente vigentes.</div>
+        <div class="year-card"><span class="y">2027</span>PIS/Cofins extintos. CBS entra em valor total. IPI vai a 0% (exceto ZFM). IBS segue em teste.</div>
+        <div class="year-card"><span class="y">2028</span>IBS continua em fase de teste (0,05% UF + 0,05% município).</div>
+        <div class="year-card"><span class="y">2029</span>IBS sobe para 10%. ICMS e ISS caem para 90%.</div>
+        <div class="year-card"><span class="y">2030–32</span>IBS cresce 10 p.p./ano (20%→40%). ICMS/ISS caem 10 p.p./ano (80%→60%).</div>
+        <div class="year-card"><span class="y">2033</span>ICMS e ISS extintos. IBS e CBS totalmente vigentes.</div>
+      </div>
+      <p style="font-size:13px; opacity:.85;">Os benefícios e incentivos fiscais do modelo antigo também são reduzidos em 1/10 ao ano ao longo desse período.</p>
+    `
+  },
+  {
+    tag:"Fase 5 · Quanto vai custar",
+    title:"Alíquotas e reduções",
+    icon:"percent",
+    html:`
+      <p>Cada ente federativo (União, estados, municípios) tem autonomia para fixar sua própria alíquota padrão. Se não fixar, vale a <strong>alíquota de referência</strong>.</p>
+      <div class="stat-row">
+        <div class="chip"><b>9,24%</b> CBS (referência)</div>
+        <div class="chip"><b>18,70%</b> IBS (referência)</div>
+        <div class="chip"><b>27,91%</b> Soma estimada (CGIBS 14/2026)</div>
+      </div>
+      <p style="font-size:13px; opacity:.85;">A estimativa inicial do Ministério da Fazenda era de 26,5%; o estudo mais recente elevou a projeção para ~27,91%.</p>
+      <h4>Reduções previstas sobre a alíquota padrão</h4>
+      <div class="grid-cards">
+        <div class="mini-card"><div class="mc-title">100% (isenção efetiva)</div><ul><li>Cesta Básica Nacional de Alimentos</li><li>PROUNI (só CBS)</li><li>Táxi, PCD e TEA na compra de veículo</li></ul></div>
+        <div class="mini-card"><div class="mc-title">60%</div><ul><li>Educação, saúde e dispositivos médicos</li><li>Medicamentos e transporte público</li><li>Alimentos e insumos agropecuários</li></ul></div>
+        <div class="mini-card"><div class="mc-title">70% e 50%</div><ul><li>70%: locação/arrendamento de imóveis</li><li>50%: demais operações com imóveis</li></ul></div>
+        <div class="mini-card"><div class="mc-title">30%</div><ul><li>Profissões intelectuais fiscalizadas por conselho profissional</li></ul></div>
+      </div>
+      <h4>Setores com regime específico</h4>
+      <div class="tag-cloud">
+        <span>Transporte coletivo</span><span>Agências de viagem</span><span>Bares e restaurantes</span>
+        <span>Hotelaria</span><span>Parques temáticos</span><span>Aviação regional</span>
+        <span>Combustíveis</span><span>Cooperativas</span><span>Futebol (SAF)</span><span>Educação</span>
+      </div>
+    `
+  },
+  {
+    tag:"Fase 6 · Na prática",
+    title:"O que muda dentro da empresa",
+    icon:"grid",
+    html:`
+      <p>A reforma não é só uma questão fiscal — ela atravessa quase todas as áreas de uma operação. Por isso a atuação integrada entre elas é essencial.</p>
+      <div class="grid-cards">
+        <div class="mini-card"><div class="mc-title">Compras</div><ul><li>Adequação tributária da cadeia</li><li>Revisão de contratos de fornecedores</li></ul></div>
+        <div class="mini-card"><div class="mc-title">Comercial</div><ul><li>Revisão de preços e contratos</li><li>Avaliação dos impactos de CBS e IBS na margem</li></ul></div>
+        <div class="mini-card"><div class="mc-title">Logística</div><ul><li>Revisão dos fluxos operacionais</li><li>Implantação de novos controles</li></ul></div>
+        <div class="mini-card"><div class="mc-title">TI</div><ul><li>Adequação dos ERPs</li><li>Integrações e automações (Split Payment)</li></ul></div>
+        <div class="mini-card"><div class="mc-title">Fiscal</div><ul><li>Apuração de CBS e IBS</li><li>Gestão e maximização de créditos</li></ul></div>
+        <div class="mini-card"><div class="mc-title">Contabilidade</div><ul><li>Gestão de créditos tributários</li><li>Revisão do plano de contas</li></ul></div>
+        <div class="mini-card"><div class="mc-title">Jurídico</div><ul><li>Mitigação de riscos tributários</li><li>Adequação jurídica à nova legislação</li></ul></div>
+        <div class="mini-card"><div class="mc-title">Contas a Pagar/Receber</div><ul><li>Impactos do Split Payment no caixa</li><li>Reconhecimento de receitas e conformidade</li></ul></div>
+      </div>
+      <h4>Fatores críticos de sucesso</h4>
+      <div class="tag-cloud">
+        <span>Governança do programa</span><span>Adequação de processos</span><span>Revisão contratual</span>
+        <span>Parametrização de sistemas</span><span>Gestão tributária e compliance</span>
+      </div>
+    `
+  }
+];
+
+const trailEl = document.getElementById('trail-container');
+phases.forEach((p, i) => {
+  const details = document.createElement('details');
+  details.className = 'phase';
+  details.dataset.visited = 'false';
+  details.innerHTML = `
+    <summary>
+      <div class="phase-row">
+        <div class="node"><span class="num">${i+1}</span><span class="check">${iconSvg('grid').replace('viewBox="0 0 24 24"','viewBox="0 0 24 24" width="22" height="22"').replace(ICONS.grid, '<path d="M5 13l4 4L19 7"/>')}</span></div>
+        <div class="phase-card">
+          <div class="phase-tag">${p.tag}</div>
+          <div class="phase-title">
+            <span>${p.title}</span>
+            <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M6 9l6 6 6-6"/></svg>
+          </div>
+          <div class="phase-body">${p.html}</div>
+        </div>
+      </div>
+    </summary>
+  `;
+  // move phase-body outside summary flow visually via CSS already handled; toggle listener:
+  details.addEventListener('toggle', () => {
+    if (details.open && details.dataset.visited === 'false') {
+      details.dataset.visited = 'true';
+      updateProgress();
+    }
+  });
+  trailEl.appendChild(details);
+});
+
+function updateProgress(){
+  const total = phases.length;
+  const visited = document.querySelectorAll('details.phase[data-visited="true"]').length;
+  document.getElementById('visited-count').textContent = visited;
+  document.getElementById('progress-fill').style.width = (visited/total*100) + '%';
+}
+
+/* ---------------- QUIZ ---------------- */
+const quiz = [
+  {
+    q:"Qual tributo substitui os impostos federais e qual substitui os estaduais/municipais?",
+    options:[
+      "CBS substitui os estaduais (ICMS/ISS) e IBS substitui os federais (PIS/Cofins)",
+      "CBS substitui os federais (PIS/Cofins) e IBS substitui os estaduais/municipais (ICMS/ISS)",
+      "Os dois substituem apenas o ICMS",
+      "O Imposto Seletivo substitui todos os tributos federais e estaduais"
+    ],
+    correct:1,
+    explain:"O <b>CBS</b> é um tributo <b>federal</b> e substitui PIS e Cofins. Já o <b>IBS</b> é <b>subnacional</b> (estados e municípios) e substitui ICMS e ISS."
+  },
+  {
+    q:"Quais dispositivos legais instituíram e regulamentaram a reforma?",
+    options:[
+      "Apenas a Constituição de 1988",
+      "EC 132/2023 e, principalmente, a LC 214/2025",
+      "Decreto nº 214/2025",
+      "Uma Lei Ordinária federal de 2026"
+    ],
+    correct:1,
+    explain:"A reforma foi <b>instituída pela Emenda Constitucional nº 132/2023</b> e regulamentada principalmente pela <b>Lei Complementar nº 214/2025</b>."
+  },
+  {
+    q:"Quantos princípios centrais guiam a Reforma Tributária, segundo o material?",
+    options:["2", "3", "4", "6"],
+    correct:2,
+    explain:"São 4: <b>Neutralidade, Não Cumulatividade, Transparência e Simplicidade</b>."
+  },
+  {
+    q:"O que significa a tributação 'por fora' (gross-up)?",
+    options:[
+      "As alíquotas de CBS e IBS não compõem sua própria base de cálculo nem incidem uma sobre a outra",
+      "O imposto é cobrado só no momento da importação",
+      "É um benefício fiscal temporário para pequenas empresas",
+      "O imposto é calculado sobre o valor líquido, incluindo ele mesmo"
+    ],
+    correct:0,
+    explain:"É um dos 4 pilares: CBS e IBS incidem <b>'por fora'</b>, sem se somarem à própria base nem incidirem um sobre o outro."
+  },
+  {
+    q:"Pelo princípio da tributação no destino, para onde vai o IBS?",
+    options:[
+      "Para o estado/município de origem da produção",
+      "Integralmente para a União",
+      "Para o estado e município de destino, onde ocorre o consumo final",
+      "Depende do regime tributário do fornecedor"
+    ],
+    correct:2,
+    explain:"O IBS é pago aos <b>estados e municípios de destino</b> — prevalece o local do consumo final, não o da produção."
+  },
+  {
+    q:"Em que ano o modelo antigo (ICMS e ISS) é totalmente extinto e o novo sistema passa a valer por completo?",
+    options:["2025", "2027", "2029", "2033"],
+    correct:3,
+    explain:"A transição vai até <b>2033</b>, quando ICMS e ISS são extintos e CBS/IBS passam a vigorar de forma plena."
+  },
+  {
+    q:"Qual a soma estimada mais recente das alíquotas de referência de CBS + IBS?",
+    options:["9,24%", "18,70%", "26,5%", "27,91%"],
+    correct:3,
+    explain:"O estudo mais recente (TCU / Resolução CGIBS 14/2026) projeta cerca de <b>27,91%</b> — acima da estimativa inicial de 26,5%."
+  },
+  {
+    q:"O que é o Imposto Seletivo (IS)?",
+    options:[
+      "Um substituto direto do ISS",
+      "Um tributo federal sobre bens prejudiciais à saúde ou ao meio ambiente",
+      "Um imposto cobrado apenas sobre serviços de educação",
+      "Um imposto exclusivamente estadual sobre combustíveis"
+    ],
+    correct:1,
+    explain:"O IS é um tributo <b>federal</b> novo, incidente sobre bens considerados <b>prejudiciais à saúde ou ao meio ambiente</b>."
+  },
+  {
+    q:"Qual item abaixo tem redução de 100% na alíquota (isenção efetiva)?",
+    options:[
+      "Locação de imóveis em geral",
+      "Cesta Básica Nacional de Alimentos",
+      "Profissões intelectuais fiscalizadas por conselho",
+      "Serviços de hotelaria"
+    ],
+    correct:1,
+    explain:"A <b>Cesta Básica Nacional de Alimentos</b> está entre os itens com redução de 100%, junto de PROUNI (CBS) e outros casos específicos."
+  },
+  {
+    q:"O regulamento publicado em 30/04/2026 detalha um mecanismo que condiciona o repasse do imposto ao Fisco já no momento do pagamento. Qual é ele?",
+    options:["Split Payment", "Ajuste Sinief", "Regime Específico", "Apuração Assistida"],
+    correct:0,
+    explain:"O regulamento do CBS/IBS trouxe o detalhamento operacional do <b>Split Payment</b>, o pagamento dividido/segregado do imposto."
+  }
+];
+
+let qIndex = 0, score = 0, answered = false;
+
+document.getElementById('start-quiz-btn').addEventListener('click', () => {
+  document.getElementById('quiz-intro').style.display = 'none';
+  const stage = document.getElementById('quiz-stage');
+  stage.style.display = 'block';
+  qIndex = 0; score = 0;
+  renderQuestion();
+});
+
+function renderQuestion(){
+  answered = false;
+  const stage = document.getElementById('quiz-stage');
+  const item = quiz[qIndex];
+  stage.innerHTML = `
+    <div class="q-progress">Pergunta ${qIndex+1} de ${quiz.length} · Acertos até aqui: ${score}</div>
+    <p class="q-text">${item.q}</p>
+    <div class="options">
+      ${item.options.map((opt,i)=>`<button class="opt" data-i="${i}">${opt}</button>`).join('')}
+    </div>
+    <div id="explain-slot"></div>
+  `;
+  stage.querySelectorAll('.opt').forEach(btn => {
+    btn.addEventListener('click', () => selectAnswer(parseInt(btn.dataset.i)));
+  });
+}
+
+function selectAnswer(i){
+  if (answered) return;
+  answered = true;
+  const item = quiz[qIndex];
+  const buttons = document.querySelectorAll('#quiz-stage .opt');
+  buttons.forEach((btn, idx) => {
+    btn.disabled = true;
+    if (idx === item.correct) btn.classList.add('correct');
+    else if (idx === i) btn.classList.add('incorrect');
+    else btn.classList.add('dim');
+  });
+  if (i === item.correct) score++;
+  document.getElementById('explain-slot').innerHTML = `
+    <div class="explain">${item.explain}</div>
+    <button class="next-btn" id="next-btn">${qIndex < quiz.length-1 ? 'Próxima pergunta' : 'Ver resultado'}</button>
+  `;
+  document.getElementById('next-btn').addEventListener('click', () => {
+    if (qIndex < quiz.length-1) { qIndex++; renderQuestion(); }
+    else renderResult();
+  });
+}
+
+function renderResult(){
+  const stage = document.getElementById('quiz-stage');
+  const total = quiz.length;
+  const pct = Math.round(score/total*100);
+  let title, msg;
+  if (pct >= 90) { title = "Mestre da Reforma 🏆"; msg = "Você manda muito bem nesse assunto — dá até pra explicar pro resto da equipe."; }
+  else if (pct >= 70) { title = "Já manja bastante"; msg = "Boa! Só vale repassar as fases que ficaram menos claras."; }
+  else if (pct >= 40) { title = "No caminho certo"; msg = "Bom começo — volte à trilha e revise as fases com mais calma."; }
+  else { title = "Hora de revisar a trilha"; msg = "Sem problema, o assunto é denso. Reabra as fases lá em cima e tente de novo."; }
+  stage.innerHTML = `
+    <div class="result">
+      <div class="q-progress">Resultado final</div>
+      <div class="score">${score}/${total}</div>
+      <h3>${title}</h3>
+      <p>${msg}</p>
+      <button class="redo" id="redo-btn">Refazer a provinha</button>
+    </div>
+  `;
+  document.getElementById('redo-btn').addEventListener('click', () => {
+    qIndex = 0; score = 0; renderQuestion();
+  });
+}
+</script>
+</body>
+</html>
