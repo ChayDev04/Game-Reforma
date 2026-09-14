@@ -237,6 +237,9 @@
     padding:13px 24px; border-radius:999px; cursor:pointer;
   }
   .start-quiz:hover{background:var(--purple-400);}
+  .start-quiz:disabled{background:rgba(212,171,204,0.15); color:var(--text-lo); cursor:not-allowed;}
+  .lock-msg{font-size:13.5px; color:var(--sand); font-weight:500; margin:-10px 0 18px;}
+  .lock-msg.done{color:var(--green);}
 
   #quiz-stage{position:relative; z-index:1;}
   .q-progress{font-size:13px; color:var(--sand); font-weight:600; margin-bottom:8px; letter-spacing:.02em;}
@@ -322,7 +325,8 @@
       <div class="quiz-intro" id="quiz-intro">
         <h3>Pronto pra jogar?</h3>
         <p>São 10 perguntas de múltipla escolha, uma de cada vez, com correção na hora. No final você vê sua pontuação.</p>
-        <button class="start-quiz" id="start-quiz-btn">Iniciar provinha</button>
+        <p id="quiz-lock-msg" class="lock-msg">Explore as 6 fases da trilha lá em cima para liberar a provinha.</p>
+        <button class="start-quiz" id="start-quiz-btn" disabled>Iniciar provinha</button>
       </div>
       <div id="quiz-stage" style="display:none;"></div>
     </div>
@@ -514,12 +518,25 @@ phases.forEach((p, i) => {
   });
   trailEl.appendChild(details);
 });
+updateProgress();
 
 function updateProgress(){
   const total = phases.length;
   const visited = document.querySelectorAll('details.phase[data-visited="true"]').length;
   document.getElementById('visited-count').textContent = visited;
   document.getElementById('progress-fill').style.width = (visited/total*100) + '%';
+
+  const startBtn = document.getElementById('start-quiz-btn');
+  const lockMsg = document.getElementById('quiz-lock-msg');
+  if (visited >= total) {
+    startBtn.disabled = false;
+    lockMsg.textContent = 'Trilha completa — pode começar!';
+    lockMsg.classList.add('done');
+  } else {
+    startBtn.disabled = true;
+    lockMsg.textContent = `Explore as ${total} fases da trilha lá em cima para liberar a provinha (${visited}/${total}).`;
+    lockMsg.classList.remove('done');
+  }
 }
 
 /* ---------------- QUIZ ---------------- */
