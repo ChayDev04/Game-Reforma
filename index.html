@@ -144,11 +144,26 @@
     position:relative; z-index:2; transition:all .2s ease;
   }
   .node .check{display:none;}
+  .node .lock{display:none; color:var(--text-lo);}
   details.phase[data-visited="true"] .node{
     background:var(--green); border-color:var(--green); color:#132900;
   }
   details.phase[data-visited="true"] .node .num{display:none;}
   details.phase[data-visited="true"] .node .check{display:block;}
+  details.phase[data-locked="true"] .node .num{display:none;}
+  details.phase[data-locked="true"] .node .lock{display:block;}
+  details.phase[data-locked="true"] .node{background:rgba(212,171,204,0.08); border-color:rgba(212,171,204,0.25);}
+  details.phase[data-locked="true"] summary{cursor:not-allowed;}
+  details.phase[data-locked="true"] .phase-card{opacity:.5;}
+  details.phase[data-locked="true"] .phase-card:hover{border-color:var(--line);}
+  details.phase[data-locked="true"] .chev{display:none;}
+  @keyframes shake{
+    10%,90%{transform:translateX(-2px);}
+    20%,80%{transform:translateX(3px);}
+    30%,50%,70%{transform:translateX(-5px);}
+    40%,60%{transform:translateX(5px);}
+  }
+  details.phase.shake .phase-card{animation:shake .4s ease;}
   .node svg{width:24px; height:24px;}
 
   .phase-card{
@@ -310,7 +325,7 @@
     <div class="section-head">
       <div class="section-eyebrow">A TRILHA</div>
       <h2>Seis fases até dominar a reforma</h2>
-      <p>Clique em cada estação para abrir o conteúdo. As estações ficam verdes conforme você avança — isso também libera o teste ao final.</p>
+      <p>Cada fase é liberada ao concluir a anterior. Clique na estação disponível para abrir o conteúdo; ela fica verde ao ser concluída, liberando a próxima — e, ao final, o teste.</p>
     </div>
     <div class="trail" id="trail-container"></div>
   </section>
@@ -492,25 +507,46 @@ phases.forEach((p, i) => {
   const details = document.createElement('details');
   details.className = 'phase';
   details.dataset.visited = 'false';
+  details.dataset.locked = i === 0 ? 'false' : 'true';
   details.innerHTML = `
     <summary>
       <div class="phase-row">
-        <div class="node"><span class="num">${i+1}</span><span class="check">${iconSvg('grid').replace('viewBox="0 0 24 24"','viewBox="0 0 24 24" width="22" height="22"').replace(ICONS.grid, '<path d="M5 13l4 4L19 7"/>')}</span></div>
+        <div class="node">
+          <span class="num">${i+1}</span>
+          <span class="check">${iconSvg('grid').replace('viewBox="0 0 24 24"','viewBox="0 0 24 24" width="22" height="22"').replace(ICONS.grid, '<path d="M5 13l4 4L19 7"/>')}</span>
+          <span class="lock">${iconSvg('grid').replace('viewBox="0 0 24 24"','viewBox="0 0 24 24" width="20" height="20"').replace(ICONS.grid, '<rect x="5" y="10" width="14" height="9" rx="2"/><path d="M8 10V7a4 4 0 018 0v3"/>')}</span>
+        </div>
         <div class="phase-card">
           <div class="phase-tag">${p.tag}</div>
           <div class="phase-title">
             <span>${p.title}</span>
             <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M6 9l6 6 6-6"/></svg>
           </div>
-          <div class="phase-body">${p.html}</div>
+          <div class="phase-body">${i === 0 ? p.html : ''}</div>
         </div>
       </div>
     </summary>
   `;
-  // move phase-body outside summary flow visually via CSS already handled; toggle listener:
+  details.dataset.rendered = i === 0 ? 'true' : 'false';
+  const summaryEl = details.querySelector('summary');
+  summaryEl.addEventListener('click', (e) => {
+    if (details.dataset.locked === 'true') {
+      e.preventDefault();
+      details.classList.add('shake');
+      setTimeout(() => details.classList.remove('shake'), 400);
+    }
+  });
   details.addEventListener('toggle', () => {
     if (details.open && details.dataset.visited === 'false') {
       details.dataset.visited = 'true';
+      const next = trailEl.children[i + 1];
+      if (next) {
+        next.dataset.locked = 'false';
+        if (next.dataset.rendered === 'false') {
+          next.querySelector('.phase-body').innerHTML = phases[i + 1].html;
+          next.dataset.rendered = 'true';
+        }
+      }
       updateProgress();
     }
   });
