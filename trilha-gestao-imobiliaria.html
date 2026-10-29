@@ -1,0 +1,762 @@
+<!doctype html>
+<html lang="pt-BR" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Gestão Imobiliária na Reforma | Rede Américas</title>
+<style>:root{color-scheme:light}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=Literata:opsz,wght@7..72,400;7..72,600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+/* Layout: caderno de trilha — índice de módulos à esquerda (vira faixa no celular), página de leitura/avaliação à direita */
+:root{
+  --bg:#F6F2F7; --surface:#FFFFFF; --surface-2:#EFE7F1; --ink:#22152A; --muted:#66546F; --line:#E2D5E6;
+  --accent:#642277; --accent-2:#864893; --accent-soft:#F1E4F3; --on-accent:#FFFFFF;
+  --ok:#3D7A10; --ok-fill:#76C42B; --ok-soft:#E7F5DA; --bad:#B0243C; --bad-soft:#FBE5E9; --sand:#B3B394; --sand-soft:#F1F1E8;
+  --f-display:"Outfit", "Segoe UI", system-ui, sans-serif;
+  --f-read:"Literata", Georgia, "Times New Roman", serif;
+  --f-mono:"IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
+  --radius:10px;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#151018; --surface:#1E1623; --surface-2:#291F2F; --ink:#F2EAF4; --muted:#B9A8C0; --line:#3A2C42;
+  --accent:#CB93D6; --accent-2:#A368AA; --accent-soft:#33233B; --on-accent:#1A0F1E;
+  --ok:#A3DD6A; --ok-fill:#76C42B; --ok-soft:#21301A; --bad:#FF93A6; --bad-soft:#3B1C25; --sand:#C9C9A9; --sand-soft:#2A2A22;
+  color-scheme:dark }}
+:root[data-theme="dark"]{
+  --bg:#151018; --surface:#1E1623; --surface-2:#291F2F; --ink:#F2EAF4; --muted:#B9A8C0; --line:#3A2C42;
+  --accent:#CB93D6; --accent-2:#A368AA; --accent-soft:#33233B; --on-accent:#1A0F1E;
+  --ok:#A3DD6A; --ok-fill:#76C42B; --ok-soft:#21301A; --bad:#FF93A6; --bad-soft:#3B1C25; --sand:#C9C9A9; --sand-soft:#2A2A22;
+  color-scheme:dark }
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-display);font-size:15px;line-height:1.5;
+  padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px));padding-block:20px 48px}
+.app{max-width:1180px;margin:0 auto;display:grid;grid-template-columns:270px minmax(0,1fr);gap:28px;align-items:start}
+button{font:inherit;cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+/* Índice */
+.rail{position:sticky;top:calc(env(safe-area-inset-top, 0px) + 16px);display:flex;flex-direction:column;gap:18px}
+.brand{display:flex;flex-direction:column;gap:2px;padding:4px 2px}
+.brand b{font-weight:700;font-size:20px;letter-spacing:-.01em;color:var(--accent)}
+.brand span{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.meter{display:flex;flex-direction:column;gap:6px}
+.meter-row{display:flex;justify-content:space-between;font-size:13px;color:var(--muted)}
+.meter-row strong{color:var(--ink);font-variant-numeric:tabular-nums}
+.track{height:6px;border-radius:99px;background:var(--surface-2);overflow:hidden}
+.track i{display:block;height:100%;background:var(--accent);border-radius:99px;transition:width .4s}
+.mods{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:2px}
+.mod-btn{width:100%;display:grid;grid-template-columns:28px minmax(0,1fr);gap:10px;align-items:start;text-align:left;
+  background:transparent;border:0;border-radius:8px;padding:9px 8px;color:var(--ink)}
+.mod-btn:hover:not([disabled]){background:var(--surface-2)}
+.mod-btn[aria-current="true"]{background:var(--surface);box-shadow:inset 0 0 0 1px var(--line)}
+.mod-btn[disabled]{cursor:not-allowed;opacity:.55}
+.num{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;font-size:13px;font-weight:600;
+  border:1.5px solid var(--line);color:var(--muted);font-variant-numeric:tabular-nums}
+.done .num{background:var(--ok-fill);border-color:var(--ok-fill);color:#14230A}
+.open .num{border-color:var(--accent);color:var(--accent)}
+.mod-txt{display:flex;flex-direction:column;gap:1px;min-width:0}
+.mod-txt b{font-weight:500;font-size:14px;line-height:1.3}
+.mod-txt small{font-size:12px;color:var(--muted)}
+.mod-txt small.ok{color:var(--ok)}
+
+/* Página */
+.page{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:clamp(20px,4vw,44px);min-width:0}
+.eyebrow{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--accent-2);font-weight:600}
+h1{font-size:clamp(28px,4.2vw,42px);line-height:1.08;letter-spacing:-.02em;margin:10px 0 14px;text-wrap:balance;font-weight:600}
+h2{font-size:clamp(23px,3vw,30px);line-height:1.15;letter-spacing:-.015em;margin:8px 0 6px;text-wrap:balance;font-weight:600}
+h3{font-size:19px;line-height:1.25;margin:34px 0 8px;font-weight:600;text-wrap:balance}
+.meta{color:var(--muted);font-size:14px}
+.lead{font-family:var(--f-read);font-size:17px;line-height:1.65;max-width:66ch;color:var(--ink)}
+.read p,.read li{font-family:var(--f-read);font-size:16px;line-height:1.7;max-width:66ch}
+.read ul,.read ol{padding-left:1.2em;margin:8px 0}
+.read li{margin:4px 0}
+.read strong{font-weight:600}
+code,.mono{font-family:var(--f-mono);font-size:.88em;background:var(--surface-2);padding:1px 5px;border-radius:4px}
+.facts{display:flex;flex-wrap:wrap;gap:10px;margin:22px 0}
+.fact{display:flex;flex-direction:column;padding:12px 16px;border-radius:var(--radius);background:var(--surface-2);min-width:120px;flex:1 1 120px}
+.fact b{font-size:24px;font-weight:600;font-variant-numeric:tabular-nums;color:var(--accent)}
+.fact span{font-size:13px;color:var(--muted)}
+.field{display:flex;flex-direction:column;gap:6px;margin:22px 0 8px;max-width:520px}
+.field label{font-weight:500;font-size:14px}
+.field input{font:inherit;font-size:16px;padding:11px 13px;border-radius:8px;border:1.5px solid var(--line);background:var(--bg);color:var(--ink)}
+.field input:focus{border-color:var(--accent);outline:none}
+.hint{font-size:13px;color:var(--muted)}
+.actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:26px;align-items:center}
+.btn{border:0;border-radius:8px;padding:11px 18px;font-weight:600;font-size:15px;background:var(--accent);color:var(--on-accent)}
+.btn:hover{filter:brightness(1.08)}
+.btn[disabled]{opacity:.45;cursor:not-allowed;filter:none}
+.btn.ghost{background:transparent;color:var(--accent);box-shadow:inset 0 0 0 1.5px var(--accent)}
+.btn.quiet{background:var(--surface-2);color:var(--ink)}
+.note{font-size:13px;color:var(--muted);max-width:70ch;margin-top:26px;padding-top:16px;border-top:1px solid var(--line)}
+.callout{margin:18px 0;padding:14px 18px;border-radius:var(--radius);background:var(--accent-soft);max-width:70ch}
+.callout .tag{display:block;font-size:11px;letter-spacing:.14em;text-transform:uppercase;font-weight:600;color:var(--accent);margin-bottom:4px}
+.callout p{margin:4px 0}
+.callout.sand{background:var(--sand-soft)}
+.callout.sand .tag{color:var(--muted)}
+.tbl{overflow-x:auto;margin:14px 0;max-width:72ch}
+table{border-collapse:collapse;width:100%;font-size:14px}
+th,td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-weight:600;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+td.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.yes{color:var(--ok);font-weight:600}.no{color:var(--bad);font-weight:600}
+.pill{display:inline-block;font-size:12px;font-weight:600;padding:3px 10px;border-radius:99px}
+.pill.ok{background:var(--ok-soft);color:var(--ok)}.pill.bad{background:var(--bad-soft);color:var(--bad)}
+
+/* Linha do tempo */
+.tl{list-style:none;padding:0;margin:16px 0;display:flex;flex-direction:column;gap:0;max-width:70ch}
+.tl li{display:grid;grid-template-columns:96px minmax(0,1fr);gap:14px;padding:10px 0;border-bottom:1px solid var(--line)}
+.tl time{font-family:var(--f-mono);font-size:13px;color:var(--accent);font-weight:500;padding-top:2px}
+.tl p{margin:0;font-family:var(--f-read);font-size:15px;line-height:1.6}
+
+/* Gráfico de alíquota efetiva */
+.chart{margin:18px 0 6px;max-width:640px}
+.chart-legend{display:flex;flex-wrap:wrap;gap:14px;font-size:12px;color:var(--muted);margin-bottom:10px}
+.chart-legend i{display:inline-block;width:14px;height:0;border-top:2px dashed currentColor;vertical-align:middle;margin-right:6px}
+.chart-legend .lr{color:var(--bad)}.chart-legend .lp{color:var(--muted)}
+.bars{display:flex;flex-direction:column;gap:6px}
+.bar-row{display:grid;grid-template-columns:44px minmax(0,1fr) 54px;gap:10px;align-items:center;font-size:13px}
+.bar-row .y{font-family:var(--f-mono);color:var(--muted)}
+.bar-row .v{text-align:right;font-variant-numeric:tabular-nums;font-weight:600}
+.bar-track{position:relative;height:18px;background:var(--surface-2);border-radius:4px}
+.bar-track b{position:absolute;inset:0 auto 0 0;background:var(--accent-2);border-radius:4px}
+.bar-row.last .bar-track b{background:var(--accent)}
+.mark{position:absolute;top:-3px;bottom:-3px;border-left:2px dashed}
+.mark.r{border-color:var(--bad)}.mark.p{border-color:var(--muted)}
+.chart-axis{display:grid;grid-template-columns:44px minmax(0,1fr) 54px;gap:10px;font-size:11px;color:var(--muted);margin-top:4px}
+.chart-axis div{display:flex;justify-content:space-between;font-variant-numeric:tabular-nums}
+
+/* Avaliação */
+.qhead{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+.qprog{height:4px;background:var(--surface-2);border-radius:99px;margin:12px 0 24px;overflow:hidden}
+.qprog i{display:block;height:100%;background:var(--accent);transition:width .3s}
+.qtext{font-size:clamp(18px,2.4vw,22px);line-height:1.35;font-weight:500;margin:0 0 18px;max-width:62ch;text-wrap:pretty}
+.opts{display:flex;flex-direction:column;gap:10px;max-width:72ch;border:0;padding:0;margin:0}
+.opt{display:grid;grid-template-columns:22px minmax(0,1fr);gap:12px;align-items:start;padding:13px 16px;border-radius:var(--radius);
+  border:1.5px solid var(--line);background:var(--bg);cursor:pointer;transition:border-color .15s, background .15s}
+.opt:hover{border-color:var(--accent-2)}
+.opt input{margin:3px 0 0;width:18px;height:18px;accent-color:var(--accent)}
+.opt span{font-family:var(--f-read);font-size:15.5px;line-height:1.55}
+.opt:has(input:checked){border-color:var(--accent);background:var(--accent-soft)}
+.dots{display:flex;flex-wrap:wrap;gap:6px;margin-top:22px}
+.dot{width:28px;height:28px;border-radius:6px;border:1.5px solid var(--line);background:transparent;font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
+.dot.ans{background:var(--surface-2);color:var(--ink)}
+.dot.cur{border-color:var(--accent);color:var(--accent)}
+
+/* Resultado */
+.score{display:flex;align-items:center;gap:22px;flex-wrap:wrap;margin:14px 0 6px}
+.ring{--p:0;width:110px;height:110px;border-radius:50%;display:grid;place-items:center;
+  background:conic-gradient(var(--c) calc(var(--p)*1%), var(--surface-2) 0)}
+.ring div{width:84px;height:84px;border-radius:50%;background:var(--surface);display:grid;place-items:center;font-size:26px;font-weight:600;font-variant-numeric:tabular-nums}
+.review{list-style:none;padding:0;margin:20px 0 0;display:flex;flex-direction:column;gap:12px;max-width:76ch}
+.review li{padding:14px 16px;border-radius:var(--radius);background:var(--bg);border:1px solid var(--line)}
+.review li.wrong{border-left:4px solid var(--bad)}
+.review li.right{border-left:4px solid var(--ok-fill)}
+.review .rq{font-weight:500;margin:0 0 8px}
+.review .ra{font-family:var(--f-read);font-size:14.5px;margin:3px 0;line-height:1.55}
+.review .why{font-family:var(--f-read);font-size:14.5px;color:var(--muted);margin-top:8px;line-height:1.55}
+
+/* Conclusão */
+.record{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;margin:22px 0 8px;max-width:760px}
+.record div{padding:12px 16px;border-radius:var(--radius);background:var(--surface-2);display:flex;flex-direction:column;gap:2px;min-width:0}
+.record span{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.record b{font-size:18px;font-weight:600;overflow-wrap:anywhere;font-variant-numeric:tabular-nums}
+.locked{padding:16px 18px;background:var(--surface-2);border-radius:var(--radius);max-width:60ch}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom, 0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);
+  padding:10px 16px;border-radius:8px;font-size:14px;opacity:0;pointer-events:none;transition:opacity .2s;max-width:calc(100% - 32px)}
+.toast.show{opacity:1}
+
+@media (max-width:860px){
+  .app{grid-template-columns:minmax(0,1fr);gap:16px}
+  .rail{position:static}
+  .mods{flex-direction:row;overflow-x:auto;gap:6px;padding-bottom:4px;scroll-snap-type:x mandatory}
+  .mods li{flex:0 0 auto;scroll-snap-align:start}
+  .mod-btn{grid-template-columns:28px auto;max-width:220px;border:1px solid var(--line);background:var(--surface)}
+  .tl li{grid-template-columns:78px minmax(0,1fr)}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="rail" aria-label="Módulos da trilha">
+    <div class="brand"><b>Rede Américas</b><span>Reforma Tributária</span></div>
+    <div class="meter">
+      <div class="meter-row"><span>Progresso</span><strong id="meterTxt">0 de 6</strong></div>
+      <div class="track"><i id="meterBar" style="width:0%"></i></div>
+    </div>
+    <ul class="mods" id="mods"></ul>
+  </aside>
+  <main class="page" id="page" tabindex="-1"></main>
+</div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+const PASS = 0.7;
+const STORE = "ra-rt-trilha-gestao-imobiliaria-v1";
+const TRAIL = "Reforma Tributária na Gestão Imobiliária";
+
+/* Alíquota efetiva estimada da locação (redução de 70%), com CBS 9,21% e IBS 18,70% */
+const RATES = [["2027",2.76],["2028",2.76],["2029",3.32],["2030",3.89],["2031",4.45],["2032",5.01],["2033",8.37]];
+function rateChart(){
+  const max = 10, pct = v => (v/max*100).toFixed(1)+"%";
+  const rows = RATES.map(([y,v],i)=>`<div class="bar-row${i===RATES.length-1?" last":""}"><span class="y">${y}</span>
+    <div class="bar-track"><b style="width:${pct(v)}"></b><i class="mark p" style="left:${pct(3.65)}"></i><i class="mark r" style="left:${pct(9.25)}"></i></div>
+    <span class="v">${v.toFixed(2).replace(".",",")}%</span></div>`).join("");
+  return `<div class="chart" role="img" aria-label="Alíquota efetiva estimada da locação: 2,76% em 2027 e 2028, subindo até 5,01% em 2032 e 8,37% em 2033. Referências: 3,65% do PIS/Cofins no lucro presumido e 9,25% no lucro real.">
+    <div class="chart-legend"><span class="lp"><i></i>PIS/Cofins lucro presumido: 3,65%</span><span class="lr"><i></i>PIS/Cofins lucro real: 9,25%</span></div>
+    <div class="bars">${rows}</div>
+    <div class="chart-axis"><span></span><div><span>0%</span><span>5%</span><span>10%</span></div><span></span></div></div>`;
+}
+
+const MODULES = [
+{ title:"Fundamentos da reforma", short:"O que muda no consumo", mins:8,
+  lesson:`
+<p class="lead">A reforma tributária em curso mexe apenas na tributação sobre o consumo. Imposto de renda, dividendos e contribuição previdenciária ficam de fora. Para a gestão imobiliária, o ponto central é que a locação, que hoje paga só PIS/Cofins, passa a ser alcançada também pelo novo tributo de estados e municípios.</p>
+<h3>Quem sai e quem entra</h3>
+<div class="tbl"><table><thead><tr><th>Hoje</th><th>Com a reforma</th><th>Quem fica com o tributo</th></tr></thead><tbody>
+<tr><td>PIS, Cofins e IPI</td><td><strong>CBS</strong> (Contribuição sobre Bens e Serviços)</td><td>União</td></tr>
+<tr><td>ICMS e ISS</td><td><strong>IBS</strong> (Imposto sobre Bens e Serviços)</td><td>Estados, DF e municípios, de forma compartilhada</td></tr>
+<tr><td>—</td><td>Imposto Seletivo</td><td>União (produtos prejudiciais à saúde e ao meio ambiente; sem efeito direto na locação)</td></tr>
+</tbody></table></div>
+<p>O IBS é um tributo único, com pagamento único, mas o valor arrecadado é dividido entre o estado e o município onde a operação acontece. No caso da locação, o destino é o local do imóvel.</p>
+<h3>Base legal e o que ainda está em aberto</h3>
+<ul>
+<li><strong>Emenda Constitucional 132/2023</strong>: extingue os tributos atuais e cria os novos.</li>
+<li><strong>Lei Complementar 214/2025</strong>: regulamenta IBS e CBS. É a principal referência da reforma.</li>
+<li><strong>Lei Complementar 227/2026</strong>: cria o Comitê Gestor do IBS e ajusta a LC 214.</li>
+<li><strong>Regulamento do IBS e da CBS</strong> (abril de 2026).</li>
+<li><strong>Atos Conjuntos RFB/CGIBS</strong>: fazem o papel das instruções normativas da Receita, orientando como operacionalizar.</li>
+</ul>
+<div class="callout"><span class="tag">Na prática</span><p>O regulamento remete a atos conjuntos mais de cem vezes. Isso significa que vários pontos ainda não têm resposta. Quando faltar orientação, a conduta é adotar a premissa menos arriscada, registrar a decisão e seguir até que venha regra mais clara.</p></div>
+<h3>Os quatro princípios</h3>
+<p>Neutralidade, não cumulatividade, transparência e simplicidade.</p>
+<h3>As quatro mudanças de estrutura</h3>
+<ol>
+<li><strong>Não cumulatividade plena.</strong> É o coração da reforma. Todo tributo pago em aquisições ligadas à atividade vira crédito para abater do tributo devido nas vendas. Não importa mais se é mercadoria ou serviço. O hospital, que hoje está no regime cumulativo, passa a recuperar o tributo de tudo o que compra, inclusive do aluguel.</li>
+<li><strong>Tributação por fora.</strong> Hoje o tributo é embutido no preço (o chamado gross-up). Com a reforma, define-se o preço e o tributo é calculado sobre ele e somado. Isso expõe a pergunta que os contratos de aluguel nunca responderam: o valor combinado é líquido ou bruto?</li>
+<li><strong>Tributação no destino.</strong> O tributo vai para onde está o consumidor. Na locação, para onde está o imóvel. Impacto pequeno para a área.</li>
+<li><strong>Base ampla de incidência.</strong> IBS e CBS incidem sobre qualquer operação onerosa. A locação está citada expressamente no art. 4º da LC 214/2025. Multas e juros cobrados também entram.</li>
+</ol>
+<h3>Como funciona o débito e crédito</h3>
+<div class="tbl"><table><thead><tr><th>Etapa</th><th class="n">Valor</th><th class="n">Tributo (10%)</th></tr></thead><tbody>
+<tr><td>Compra de insumo</td><td class="n">R$ 100,00</td><td class="n">R$ 10,00 de crédito</td></tr>
+<tr><td>Venda</td><td class="n">R$ 400,00</td><td class="n">R$ 40,00 de débito</td></tr>
+<tr><td><strong>Tributo efetivamente pago</strong></td><td class="n"></td><td class="n"><strong>R$ 30,00</strong></td></tr>
+</tbody></table></div>
+<p>Os R$ 30 equivalem a 10% sobre os R$ 300 que a empresa agregou. Por isso o modelo é chamado de IVA, imposto sobre valor agregado, o mesmo usado na maior parte do mundo.</p>
+<h3>Alíquotas estimadas</h3>
+<p>A estimativa apresentada no treinamento é de <strong>9,21% de CBS</strong> e <strong>18,70% de IBS</strong>, cerca de <strong>27,91%</strong> no total. Essa é a alíquota geral, não a da locação, que tem redução (módulo 2). A CBS de 9,21% fica abaixo dos 9,25% de PIS/Cofins pagos hoje no lucro real.</p>
+<p class="hint">Alíquotas de referência ainda são estimativas e podem mudar até a implementação plena.</p>`,
+  qs:[
+{q:"Quais tributos atuais são substituídos pela CBS?", o:["PIS, Cofins e IPI","ICMS e ISS","IRPJ e CSLL","PIS, Cofins e ISS"], w:"A CBS é o tributo federal que substitui PIS, Cofins e IPI. ICMS e ISS dão lugar ao IBS. Imposto de renda não faz parte desta reforma."},
+{q:"A locação de imóveis nunca pagou ICMS nem ISS. Por que ela passa a ter IBS?", o:["Porque o IBS incide sobre operações onerosas, e a locação é uma operação onerosa citada expressamente no art. 4º da LC 214/2025","Porque a locação passou a ser classificada como serviço na lista do ISS","Porque o IBS só alcança locação de imóveis comerciais","Porque cada município decidiu tributar a locação a partir de 2027"], w:"O ICMS alcança circulação de mercadorias e o ISS, serviços. A locação não se encaixava em nenhum dos dois. O IBS tem outra hipótese de incidência: qualquer operação onerosa. A LC 214 menciona a locação de forma expressa."},
+{q:"Como funciona a competência do IBS?", o:["É compartilhada: tributo e pagamento únicos, com a arrecadação dividida entre estado e município","É exclusiva da União e administrada pela Receita Federal","É exclusiva dos municípios, como o ISS","É exclusiva dos estados, como o ICMS"], w:"Estados e municípios deixam de ter tributos próprios sobre consumo e passam a dividir o IBS, que é pago uma única vez e depois distribuído."},
+{q:"O que significa não cumulatividade plena?", o:["O tributo pago nas aquisições ligadas à atividade vira crédito para abater do tributo devido, independentemente de ser bem ou serviço","O tributo é cobrado uma única vez, apenas na última etapa da cadeia","O contribuinte escolhe entre tomar crédito ou ter redução de alíquota","Só mercadorias geram crédito, como acontece hoje no ICMS"], w:"É o ponto central da reforma: crédito amplo de tudo o que é adquirido para a atividade. A exceção passa a ser não ter crédito."},
+{q:"Uma empresa compra um insumo por R$ 100 com R$ 10 de tributo e vende o produto por R$ 400 com alíquota de 10%. Quanto ela recolhe?", o:["R$ 30,00","R$ 40,00","R$ 50,00","R$ 10,00"], w:"Débito de R$ 40 na venda menos crédito de R$ 10 na compra: R$ 30, que é 10% sobre os R$ 300 de valor agregado."},
+{q:"O que é a tributação por fora?", o:["O tributo é calculado sobre o preço e somado a ele, sem compor a própria base de cálculo","O tributo deixa de constar na nota fiscal","O tributo é recolhido pelo locatário em vez do locador","O tributo continua embutido no preço, como hoje"], w:"A reforma acaba com o gross-up. Primeiro se define o preço; o tributo vem depois, destacado. Por isso os contratos precisam dizer se o valor é líquido ou bruto."},
+{q:"O que são os Atos Conjuntos RFB/CGIBS?", o:["Orientações sobre como operacionalizar a reforma, no papel que hoje cabe às instruções normativas da Receita","Uma nova lei complementar que substitui a LC 214/2025","Um modelo de contrato padrão de locação","Acordos firmados entre locador e locatário"], w:"São normas operacionais editadas pela Receita Federal e pelo Comitê Gestor do IBS. O regulamento remete a eles mais de cem vezes, sinal de que muita coisa ainda será definida."},
+{q:"Diante de uma situação que a legislação ainda não responde, qual é a conduta recomendada?", o:["Adotar a premissa menos arriscada, registrar a decisão e seguir até haver orientação melhor","Suspender a emissão de notas até sair a regra","Esperar 2033, quando a reforma estará completa","Aplicar a interpretação mais vantajosa, sem documentar"], w:"A reforma está sendo construída enquanto é aplicada. Parar não é opção; a saída é escolher a premissa de menor risco e deixá-la registrada."},
+{q:"Qual é a estimativa de alíquota geral apresentada no treinamento?", o:["CBS de 9,21% e IBS de 18,70%, cerca de 27,91% no total","CBS de 9,25% e IBS de 5%, cerca de 14,25%","IBS de 26,5% e CBS de 9,21%","18% no total, somando CBS e IBS"], w:"A soma estimada é de aproximadamente 27,91%, uma das maiores do mundo. A locação não paga essa alíquota cheia: tem redução de 70%."},
+{q:"Qual destas opções NÃO é um dos quatro princípios da reforma?", o:["Progressividade da renda","Neutralidade","Transparência","Simplicidade"], w:"Os quatro princípios são neutralidade, não cumulatividade, transparência e simplicidade. Progressividade é tema da tributação da renda, que não está nesta reforma."}
+]},
+{ title:"Locação no regime de imóveis", short:"Reduções, contribuintes e transição", mins:9,
+  lesson:`
+<p class="lead">As operações com imóveis têm um regime específico na LC 214/2025, com regras próprias de cálculo, reduções de alíquota e redutores de base. A base ampla alcança alienação, locação, cessão onerosa, arrendamento, administração, intermediação, incorporação e construção.</p>
+<h3>Reduções de alíquota</h3>
+<div class="tbl"><table><thead><tr><th>Operação</th><th>Tratamento</th></tr></thead><tbody>
+<tr><td>Locação, cessão onerosa e arrendamento de <strong>imóveis</strong></td><td>Redução de <strong>70%</strong>: paga-se 30% da alíquota</td></tr>
+<tr><td>Construção, incorporação e venda de imóveis</td><td>Redução de 50%, mais redutor de ajuste e redutor social</td></tr>
+<tr><td>Locação de <strong>bens móveis</strong> (equipamentos, maquinário)</td><td>Sem redução: alíquota cheia, com direito a crédito para quem aluga</td></tr>
+</tbody></table></div>
+<div class="callout"><span class="tag">Atenção</span><p>A redução de 70% é só para imóveis. O aluguel de um equipamento médico, que hoje não tem ICMS nem ISS, passa a ter CBS e IBS na alíquota cheia. Como o hospital toma crédito, o efeito tende a ser de caixa, não de custo.</p></div>
+<h3>Alíquota efetiva da locação, ano a ano</h3>
+<p>Com a redução de 70% sobre as alíquotas estimadas (CBS 9,21% e IBS 18,70%), a carga da locação fica assim:</p>
+${rateChart()}
+<p class="hint">Estimativa: em 2027 e 2028 considera-se só a CBS; de 2029 a 2032 o IBS entra em 10%, 20%, 30% e 40%; em 2033, alíquota plena.</p>
+<p>Até 2032, a carga da locação fica abaixo dos 9,25% de PIS/Cofins que um locador do lucro real paga hoje. Esse ganho do locador é ponto de negociação (módulo 4).</p>
+<h3>Quem é contribuinte</h3>
+<ul>
+<li><strong>Pessoa jurídica:</strong> sempre (com regras próprias para o Simples Nacional).</li>
+<li><strong>Pessoa física:</strong> só quando, no ano anterior, cumprir <strong>as duas condições ao mesmo tempo</strong>: receita de locação acima de <strong>R$ 240 mil</strong> e <strong>mais de 3 imóveis</strong>.</li>
+</ul>
+<div class="tbl"><table><thead><tr><th>Locador pessoa física</th><th>Contribuinte?</th></tr></thead><tbody>
+<tr><td>1 imóvel que rendeu R$ 1 milhão no ano anterior</td><td class="no">Não</td></tr>
+<tr><td>5 imóveis que renderam R$ 100 mil</td><td class="no">Não</td></tr>
+<tr><td>4 imóveis que renderam R$ 300 mil</td><td class="yes">Sim: emite nota, ainda que pelo site da prefeitura</td></tr>
+</tbody></table></div>
+<p>Essa informação não é pública. Quem diz se é contribuinte é o próprio locador.</p>
+<h3>Regime transitório de 3,65%</h3>
+<p>Contratos por <strong>prazo determinado</strong>, firmados antes da LC 214/2025 e <strong>registrados em cartório até 31/12/2025</strong>, permitiram ao locador optar por recolher 3,65% sobre a receita (a mesma alíquota do PIS/Cofins no lucro presumido) até o fim do contrato. Para contratos residenciais, esse regime acaba em 31/12/2028.</p>
+<p>Comparando com o regime regular estimado, quem optou paga mais em 2027, 2028 e 2029 e passa a pagar menos a partir de 2030. Faz sentido para contratos longos.</p>
+<h3>O que não muda</h3>
+<p>IPTU e ITBI continuam como hoje.</p>
+<h3>Venda e compra de imóveis</h3>
+<p>Na venda, incidem CBS e IBS com redução de 50%, redutor de ajuste (que acompanha o imóvel nas vendas seguintes, para que o tributo recaia sobre o ganho) e redutor social (na primeira aquisição). O documento é a NFABI, nota fiscal de alienação de bens imóveis, e o tributo é recolhido conforme as parcelas são recebidas. Na compra de imóvel para a operação e nos gastos com reforma, construção e ampliação, o tributo pago gera crédito.</p>`,
+  qs:[
+{q:"Qual é a redução de alíquota aplicada à locação de imóveis?", o:["70%, ou seja, paga-se 30% da alíquota","50%, a mesma da construção civil","60%, a mesma dos serviços de saúde","100%: locação continua sem tributo"], w:"Locação, cessão onerosa e arrendamento de imóveis têm redução de 70%. Construção, incorporação e venda têm redução de 50%."},
+{q:"O hospital aluga um equipamento de diagnóstico de uma empresa. Como fica a tributação a partir da reforma?", o:["Incidem CBS e IBS na alíquota cheia, sem a redução de 70%, e o hospital pode tomar o crédito","Aplica-se a mesma redução de 70% da locação de imóveis","Não incide nada, porque locação de bens móveis segue fora do campo do tributo","Incide apenas o ISS, como hoje"], w:"A redução é exclusiva de imóveis. Equipamentos e maquinário passam a ter alíquota cheia, mas o tributo destacado vira crédito para o hospital."},
+{q:"Quando um locador pessoa física passa a ser contribuinte de CBS e IBS?", o:["Quando, no ano anterior, teve receita de locação acima de R$ 240 mil e mais de 3 imóveis, as duas condições juntas","Sempre que tiver mais de 3 imóveis, qualquer que seja a receita","Sempre que a receita de locação passar de R$ 240 mil, qualquer que seja o número de imóveis","Sempre que alugar para uma pessoa jurídica"], w:"As duas condições precisam ocorrer ao mesmo tempo no ano anterior."},
+{q:"Um locador pessoa física tem um único imóvel, que rendeu R$ 1 milhão de aluguel no ano anterior. Ele é contribuinte?", o:["Não, porque não tem mais de 3 imóveis","Sim, porque a receita passou de R$ 240 mil","Sim, porque aluga para uma empresa","Só se o contrato estiver registrado em cartório"], w:"A receita alta não basta. Sem ter mais de 3 imóveis, ele não é contribuinte: não emite nota com CBS/IBS e o locatário não toma crédito."},
+{q:"Pela estimativa apresentada, qual será a alíquota efetiva da locação em 2033?", o:["8,37%, que é 30% de 27,91%","27,91%, a alíquota geral","9,25%, igual ao PIS/Cofins atual","2,76%, igual a 2027"], w:"Com a reforma plena, aplica-se a redução de 70% sobre CBS + IBS: 27,91% × 30% ≈ 8,37%."},
+{q:"E em 2027 e 2028, qual é a carga estimada sobre a locação?", o:["Cerca de 2,76%: só a CBS, com redução de 70%","8,37%, já com o IBS cheio","9,25%, porque PIS/Cofins continuam","Zero, porque ainda é período de teste"], w:"Em 2027 PIS/Cofins são extintos e a CBS entra em vigor. 9,21% × 30% ≈ 2,76%. O IBS só passa a pesar a partir de 2029."},
+{q:"Quais contratos puderam entrar no regime transitório de 3,65%?", o:["Contratos por prazo determinado firmados antes da LC 214/2025 e registrados em cartório até 31/12/2025","Qualquer contrato vigente em 2026","Contratos por prazo indeterminado de qualquer data","Contratos residenciais assinados em 2026"], w:"Era preciso prazo determinado, assinatura anterior à LC 214 e registro em cartório até o fim de 2025. A opção é do locador."},
+{q:"Em relação ao regime regular estimado, como fica o locador que optou pelo regime de 3,65%?", o:["Paga mais em 2027, 2028 e 2029 e menos a partir de 2030","Paga menos em todos os anos","Paga mais em todos os anos","Paga exatamente o mesmo"], w:"Regime regular: 2,76% em 2027–2028 e 3,32% em 2029, abaixo de 3,65%. A partir de 2030 (3,89% e acima), os 3,65% ficam mais baratos."},
+{q:"Na atividade imobiliária, o que permanece igual com a reforma?", o:["IPTU e ITBI","O PIS/Cofins sobre o aluguel","A ausência de tributo sobre consumo na locação","O recibo de aluguel como único documento"], w:"IPTU e ITBI não mudam. PIS/Cofins acabam em 2027, a locação passa a ter IBS e o recibo dá lugar à nota fiscal."},
+{q:"Como funciona a tributação na venda de imóveis?", o:["Redução de 50%, redutor de ajuste e redutor social, com documento próprio (NFABI) e recolhimento conforme as parcelas são recebidas","Redução de 70%, como a locação, com recolhimento integral na assinatura","Não incide CBS nem IBS, só ITBI","Alíquota cheia, sem nenhum redutor"], w:"A venda tem regime diferenciado: alíquota reduzida em 50%, redutores de base e recolhimento à medida que o comprador paga."}
+]},
+{ title:"Cronograma da transição", short:"De 2026 a 2033", mins:6,
+  lesson:`
+<p class="lead">A reforma começou em 2026 e só estará completa em 2033. Em cada ano valem regras diferentes, e isso precisa estar refletido nos contratos e nas negociações.</p>
+<h3>Linha do tempo</h3>
+<ol class="tl">
+<li><time>2023</time><p>Emenda Constitucional 132 aprova a reforma.</p></li>
+<li><time>jan/2025</time><p>LC 214/2025 regulamenta IBS e CBS.</p></li>
+<li><time>jan/2026</time><p>LC 227/2026 cria o Comitê Gestor do IBS. Começa o ano de teste: CBS de 0,9% e IBS de 0,1% destacados, com recolhimento dispensado para quem cumpre as obrigações acessórias.</p></li>
+<li><time>abr/2026</time><p>Publicado o regulamento do IBS e da CBS. A obrigatoriedade das notas, prevista para 1º de janeiro, foi adiada e passou a contar do quarto mês após o regulamento.</p></li>
+<li><time>03/08/2026</time><p>Campos de IBS/CBS obrigatórios nos documentos de mercadorias (ICMS).</p></li>
+<li><time>01/10/2026</time><p>Obrigatórios nas notas de serviço, como as do hospital.</p></li>
+<li><time>01/12/2026</time><p><strong>Nota fiscal de locação obrigatória</strong>, com os campos de CBS/IBS. Ainda sem pagamento: serve para mostrar que os sistemas estão prontos.</p></li>
+<li><time>jan/2027</time><p>PIS e Cofins extintos. CBS em vigor. IBS em alíquota de teste. ICMS e ISS continuam.</p></li>
+<li><time>2028</time><p>Previsão do governo para o split payment, adiado porque nem os bancos estavam prontos.</p></li>
+<li><time>31/12/2028</time><p>Fim do regime opcional de 3,65% para contratos residenciais.</p></li>
+<li><time>2029–2032</time><p>ICMS e ISS diminuem e o IBS cresce: 10%, 20%, 30% e 40%.</p></li>
+<li><time>2033</time><p>Reforma plena. ICMS e ISS extintos. Valem integralmente não cumulatividade, base ampla, destino e tributação por fora.</p></li>
+</ol>
+<h3>O que isso significa para o aluguel</h3>
+${rateChart()}
+<p>Em 2027 e 2028 a locação não é problema: a CBS com redução fica abaixo do PIS/Cofins atual. A carga sobe a partir de 2029, com a entrada do IBS, e tem o salto maior em 2033.</p>
+<div class="callout"><span class="tag">Por que negociar no líquido</span><p>Se o aluguel é negociado pelo valor líquido, o locador recebe sempre o mesmo, seja qual for a alíquota do ano. O tributo vem por fora e, para o locatário contribuinte, vira crédito. Por isso o mercado tende a negociar preço líquido: o que se paga no bruto muda ano a ano, mas o valor da operação fica claro.</p></div>`,
+  qs:[
+{q:"A partir de quando a nota fiscal de locação com campos de CBS/IBS passa a ser obrigatória?", o:["1º de dezembro de 2026","1º de janeiro de 2026","3 de agosto de 2026","1º de janeiro de 2033"], w:"Mercadorias em 03/08, serviços em 01/10 e locação em 01/12/2026."},
+{q:"O que acontece em janeiro de 2027?", o:["PIS e Cofins são extintos, a CBS entra em vigor e o IBS fica em alíquota de teste","ICMS e ISS são extintos","O IBS passa a ser cobrado na alíquota cheia","Nada muda até 2029"], w:"2027 é a virada federal: sai PIS/Cofins, entra a CBS. ICMS e ISS seguem até 2032."},
+{q:"O que acontece entre 2029 e 2032?", o:["ICMS e ISS diminuem gradualmente enquanto o IBS cresce em 10%, 20%, 30% e 40%","O IBS já é cobrado integralmente desde 2029","A CBS é substituída pelo IBS","O regime cumulativo volta a valer para hospitais"], w:"É a transição subnacional: os tributos antigos convivem com o IBS por quatro anos."},
+{q:"Em que ano a reforma estará totalmente implementada?", o:["2033","2027","2029","2030"], w:"Em 2033 ICMS e ISS deixam de existir e todas as regras da reforma valem de forma plena."},
+{q:"Por que a obrigatoriedade das notas foi escalonada ao longo de 2026?", o:["Porque foi adiada de 1º de janeiro e passou a contar do quarto mês após a publicação do regulamento, que saiu em abril","Porque cada prefeitura escolheu sua data","Porque a locação ficou isenta durante 2026","Porque as empresas pediram para começar só em 2027"], w:"Sem regulamento, não era possível exigir as notas em janeiro. O governo correu para publicá-lo e o prazo passou a contar a partir dele."},
+{q:"Como funcionou o ano de teste de 2026?", o:["CBS de 0,9% e IBS de 0,1% destacados, com recolhimento dispensado para quem cumpre as obrigações acessórias","CBS cobrada na alíquota cheia","Nenhuma obrigação para as empresas","IBS de 18,70% compensável com ICMS"], w:"O teste serviu para ajustar sistemas e documentos fiscais. Quem descumpre as obrigações acessórias perde a dispensa."},
+{q:"Segundo o governo, quando o split payment passa a valer?", o:["A partir de 2028, porque o mecanismo e os bancos não estavam prontos para 2027","Obrigatoriamente em janeiro de 2027","Somente em 2033","Ele foi retirado da reforma"], w:"O split payment era esperado para 2027, mas foi postergado para 2028."},
+{q:"Quando termina o regime opcional de 3,65% para contratos residenciais?", o:["31/12/2028","31/12/2025","2033","Só no fim de cada contrato, sem limite"], w:"Contratos não residenciais podem seguir até o fim do contrato; os residenciais, até 31/12/2028."},
+{q:"Por que a tendência é negociar o aluguel pelo valor líquido?", o:["Porque a carga muda a cada ano da transição; no líquido, o locador recebe sempre o mesmo e o tributo, por fora, vira crédito para o locatário contribuinte","Porque a lei obriga contratos em valor líquido","Para dispensar a emissão de nota fiscal","Porque o tributo deixa de existir para a locação"], w:"Negociar no líquido isola o valor da operação das mudanças de alíquota. O que varia ano a ano é o bruto desembolsado."},
+{q:"A partir de que ano o IBS começa a pesar de forma relevante sobre o aluguel?", o:["2029","2026","2027","2033"], w:"Em 2027 e 2028 o IBS é só de teste. De 2029 em diante entra com 10% e vai subindo até a alíquota plena em 2033."}
+]},
+{ title:"Rede Américas como locatária", short:"Aluguel como despesa e crédito", mins:9,
+  lesson:`
+<p class="lead">Quando a Rede Américas paga aluguel, a reforma muda duas coisas: o tributo passa a vir destacado na nota do locador e, pela primeira vez, ele vira crédito para a Rede.</p>
+<h3>Hoje e depois</h3>
+<p>Hoje a Rede está no regime cumulativo. O PIS/Cofins que o locador paga já está embutido no aluguel e não é recuperado: um aluguel de R$ 1.000 custa R$ 1.000. Com a reforma, a Rede passa à não cumulatividade plena e toma crédito do tributo destacado.</p>
+<h3>Exemplo em 2033 (aluguel líquido de R$ 1.000)</h3>
+<div class="tbl"><table><thead><tr><th></th><th class="n">Locador contribuinte</th><th class="n">Locador não contribuinte</th></tr></thead><tbody>
+<tr><td>Aluguel líquido</td><td class="n">R$ 1.000,00</td><td class="n">R$ 1.000,00</td></tr>
+<tr><td>CBS + IBS (8,373%)</td><td class="n">R$ 83,73</td><td class="n">—</td></tr>
+<tr><td>Valor pago</td><td class="n">R$ 1.083,73</td><td class="n">R$ 1.000,00</td></tr>
+<tr><td>Crédito para a Rede</td><td class="n">R$ 83,73</td><td class="n">—</td></tr>
+<tr><td><strong>Custo líquido</strong></td><td class="n"><strong>R$ 1.000,00</strong></td><td class="n"><strong>R$ 1.000,00</strong></td></tr>
+</tbody></table></div>
+<div class="callout"><span class="tag">Regra de bolso</span><p>Se o fornecedor não dá direito a crédito, é porque não tem débito. O que não pode acontecer é o não contribuinte cobrar os mesmos R$ 1.083,73 do contribuinte: no líquido, ele custa menos.</p></div>
+<ul>
+<li>O crédito é exatamente o valor destacado e pago na nota, já com a redução de 70%. Nunca na alíquota cheia.</li>
+<li>Caixa não é custo. Pode haver descasamento entre pagar o aluguel com tributo e usar o crédito, mas isso pesa no primeiro mês; depois entra na rotina.</li>
+</ul>
+<h3>Oportunidade de negociação</h3>
+<p>Um locador do lucro real paga hoje 9,25% de PIS/Cofins embutidos no aluguel. Em 2027, pagará cerca de 2,76%. Se mantiver o preço, quem ganha é ele. A Rede pode pedir o repasse desse ganho, mas os contratos atuais não obrigam: é negociação. O mesmo vale para o locador do lucro presumido, que paga 3,65%.</p>
+<h3>Apuração assistida e crédito vinculado ao pagamento</h3>
+<p>A apuração passa a funcionar como a declaração pré-preenchida do imposto de renda. O fisco reúne todas as notas emitidas pela Rede e contra o CNPJ da Rede e monta a apuração; a área fiscal confere e confirma.</p>
+<ul>
+<li>A nota do locador entra automaticamente com o crédito, mas ele fica pendente até o locador pagar o tributo. O crédito é vinculado ao pagamento.</li>
+<li>Se o locador não emite nota, nada entra no sistema e não há crédito.</li>
+</ul>
+<h3>Pente-fino nos contratos</h3>
+<p>Com mais de 200 contratos, o primeiro passo é classificar: pessoa jurídica ou física; se física, contribuinte ou não (pela declaração do próprio locador, porque a informação não é pública); regime do locador; prazo e cláusulas de preço.</p>
+<h3>Situações específicas</h3>
+<div class="tbl"><table><thead><tr><th>Situação</th><th>Entendimento apresentado</th></tr></thead><tbody>
+<tr><td>Pagamento via imobiliária</td><td>A relação continua entre locador e locatário. A taxa da imobiliária tem CBS/IBS e gera crédito.</td></tr>
+<tr><td>Vários locadores no mesmo contrato</td><td>Cada contribuinte emite nota da sua parcela. Quem não é contribuinte não emite. A Rede toma crédito só do que vier destacado.</td></tr>
+<tr><td>Espólio</td><td>A lei não trata do tema. O entendimento é seguir a regra de contribuinte pessoa física; o inventariante emite a nota.</td></tr>
+<tr><td>Depósito judicial</td><td>Pagamento e nota são coisas distintas. Pagar em juízo não afasta a obrigação do locador contribuinte de emitir a nota.</td></tr>
+</tbody></table></div>`,
+  qs:[
+{q:"Por que hoje a Rede Américas não recupera o PIS/Cofins embutido no aluguel que paga?", o:["Porque está no regime cumulativo, sem mecanismo de débito e crédito","Porque a locação é isenta de PIS/Cofins","Porque os locadores não pagam PIS/Cofins","Porque só aluguel de equipamentos gera crédito"], w:"Hospitais estão hoje numa exceção da legislação, o regime cumulativo. Com a reforma, esse regime acaba e passam a tomar crédito."},
+{q:"Em 2033, a Rede paga um aluguel líquido de R$ 1.000 a um locador contribuinte. Qual é o resultado?", o:["Paga R$ 1.083,73 e toma R$ 83,73 de crédito; o custo líquido continua R$ 1.000","Paga R$ 1.279,10 e toma R$ 279,10 de crédito, na alíquota cheia","Paga R$ 1.083,73 sem direito a crédito","Paga R$ 1.000 e ainda toma R$ 83,73 de crédito"], w:"8,373% sobre R$ 1.000 dá R$ 83,73, destacados por fora e creditados integralmente."},
+{q:"E se o locador for pessoa física não contribuinte?", o:["Cobra R$ 1.000, sem CBS/IBS e sem crédito; o custo é de R$ 1.000","Deve cobrar também R$ 1.083,73","A Rede recolhe o tributo no lugar dele","A Rede ganha um crédito presumido de 8,37%"], w:"Sem débito não há crédito. O custo líquido é o mesmo do contribuinte, desde que ele não cobre o valor bruto."},
+{q:"Sobre qual valor a Rede toma crédito do aluguel?", o:["Exatamente o valor destacado e pago na nota, já com a redução de 70%","Sobre a alíquota cheia de 27,91%","Sobre os 9,25% de PIS/Cofins anteriores","Sobre um percentual definido pela própria Rede"], w:"O crédito acompanha o débito do locador. Se ele pagou com redução, o crédito é com redução."},
+{q:"Como funciona a apuração assistida?", o:["O fisco monta a apuração a partir das notas emitidas e recebidas, e a empresa confere e confirma","A empresa continua entregando sua apuração na EFD-Contribuições","O locador apura o tributo em nome do locatário","Vale apenas para pessoas físicas"], w:"É semelhante à declaração pré-preenchida do imposto de renda. O desafio passa a ser conferir se o que o sistema mostra está certo."},
+{q:"Quando o crédito do aluguel fica disponível para a Rede?", o:["Quando o locador paga o tributo daquela nota","Quando a Rede paga o aluguel","No momento em que a nota é emitida, sem outra condição","Somente a partir de 2033"], w:"O crédito é vinculado ao pagamento. A nota aparece na apuração, mas o crédito só é liberado depois que o locador recolhe."},
+{q:"Um locador do lucro real paga hoje 9,25% de PIS/Cofins embutidos no aluguel. O que muda em 2027?", o:["Sua carga cai para cerca de 2,76%, o que abre espaço para negociar redução do aluguel, embora o contrato não obrigue o repasse","Sua carga sobe para 8,37%","Nada muda até 2033","A lei obriga a reduzir o aluguel automaticamente"], w:"Se ele mantiver o preço, fica com o ganho. Pedir o repasse é negociação; os contratos não previam a reforma."},
+{q:"Qual é a diferença entre impacto de caixa e aumento de custo no aluguel?", o:["Pode haver descasamento entre pagar o tributo e usar o crédito, mas com locador contribuinte o custo líquido não aumenta","O custo sobe definitivamente em 8,37%","Não há nenhum efeito, nem de caixa","O crédito chega antes do pagamento do aluguel"], w:"O valor a mais pago ao locador volta como crédito. O que existe é um intervalo de caixa, sentido principalmente no primeiro mês."},
+{q:"Um contrato tem três irmãos como locadores e só um deles é contribuinte. Como fica?", o:["O contribuinte emite nota com CBS/IBS da sua parcela; os outros não; a Rede toma crédito só do que vier destacado","Os três precisam emitir nota com CBS/IBS","Nenhum emite, porque o contrato é único","A Rede emite a nota em nome deles"], w:"A lei não trata desse caso específico; o entendimento apresentado é que cada locador segue sua própria condição."},
+{q:"Por ordem judicial, a Rede passa a depositar o aluguel em juízo. E a nota fiscal?", o:["A obrigação do locador contribuinte de emitir a nota continua; pagamento e nota são coisas distintas","O depósito judicial dispensa a nota","A Rede passa a emitir a nota","O tributo fica suspenso até o fim do processo"], w:"A forma de pagamento não muda o dever de emitir o documento. O locador pode pedir ao juiz a liberação da parcela do tributo."}
+]},
+{ title:"Rede Américas como locadora", short:"Receita, base de cálculo e notas", mins:8,
+  lesson:`
+<p class="lead">Quando a Rede Américas é quem cobra o aluguel, por sublocação ou cessão de espaços, ela é sempre contribuinte: emite nota e recolhe CBS e IBS.</p>
+<h3>O que entra na base de cálculo</h3>
+<div class="tbl"><table><thead><tr><th>Item cobrado</th><th>Tributa?</th></tr></thead><tbody>
+<tr><td>Aluguel</td><td class="yes">Sim</td></tr>
+<tr><td>Multas e juros por atraso</td><td class="yes">Sim (via nota de débito)</td></tr>
+<tr><td>Desconto condicional (ex.: pontualidade)</td><td class="yes">Sim: tributa o valor cheio</td></tr>
+<tr><td>Desconto incondicional (na nota, sem condição)</td><td class="no">Não: reduz a base</td></tr>
+<tr><td>Condomínio, IPTU, outros tributos e reembolsos</td><td class="no">Não: lançados com código de não incidência</td></tr>
+</tbody></table></div>
+<div class="callout"><span class="tag">Exemplo</span><p>Aluguel de R$ 1.000, com R$ 900 se pago até o dia 10. A nota sai de R$ 1.000 e o tributo é sobre R$ 1.000, mesmo que entrem R$ 900. O desconto condicional integra a base por regra expressa. Já um desconto temporário sem condição, combinado numa renegociação, pode vir como incondicional e reduzir a base.</p></div>
+<h3>Os códigos da nota</h3>
+<ul>
+<li><strong><code>NBS</code></strong>: Nomenclatura Brasileira de Serviços, que identifica o serviço.</li>
+<li><strong><code>CST</code></strong>: código de situação tributária.</li>
+<li><strong><code>cClassTrib</code></strong>: código de classificação tributária. Faz para todos os tributos o que o CFOP fazia para o ICMS: diz que a operação é locação com redução de 70%, ou que a linha do condomínio não tem incidência. O sistema calcula conforme essa parametrização.</li>
+</ul>
+<h3>Clientes que não tomam crédito</h3>
+<p>Médicos pessoa física e empresas do Simples Nacional que não optarem pelo regime regular não se creditam. Para eles, a CBS/IBS do aluguel é custo: o aluguel fica mais caro. Isso pede cuidado comercial.</p>
+<p>O optante do Simples pode escolher recolher CBS e IBS pelo regime regular (o modelo híbrido), passando a tomar crédito. A adesão foi baixa, em torno de 11%, porque nenhuma tributação fica mais barata para quem está no Simples do que a do próprio Simples.</p>
+<h3>Notas de débito e de crédito</h3>
+<p>São documentos de ajuste tributário, diferentes das notas de débito e crédito financeiras.</p>
+<ul>
+<li><strong>Nota de débito</strong>: multas e juros, pagamento antecipado.</li>
+<li><strong>Nota de crédito</strong>: redução de valores. Exemplo: o locatário fez um reparo de R$ 100 e o locador aceita abater. A nota de crédito reduz o débito do locador e, na mesma medida, anula parte do crédito do locatário. Por isso exige um evento de aceite de quem recebe.</li>
+<li>Desconto condicional não gera nota de crédito: a base cheia continua tributada.</li>
+</ul>
+<div class="callout sand"><span class="tag">Cancelamento</span><p>Cancelar nota passa a ter prazo curto e penalidade alta, porque a emissão já caracteriza a incidência. Conferir antes de emitir vale mais do que corrigir depois.</p></div>`,
+  qs:[
+{q:"Como locadora, qual é a situação da Rede Américas?", o:["É contribuinte e sempre emite nota com CBS/IBS sobre o aluguel cobrado","Só emite nota se o locatário for pessoa jurídica","Está dispensada por ser um hospital","Só passa a emitir em 2033"], w:"Como receita, não há dúvida: a Rede é pessoa jurídica e contribuinte."},
+{q:"A Rede cobra multa e juros de um sublocatário que pagou com atraso. Há tributo?", o:["Sim, multas e juros são operação onerosa e tributam, por meio de nota de débito","Não, só o aluguel tributa","Só a multa tributa; os juros não","Incide apenas ISS sobre esses valores"], w:"A base ampla alcança multas e juros. A nota de débito é o documento de ajuste para esses casos."},
+{q:"Aluguel de R$ 1.000, com R$ 900 se pago até o dia 10. O locatário paga R$ 900. Qual é a base do tributo?", o:["R$ 1.000","R$ 900","R$ 100","R$ 950"], w:"Desconto condicional integra a base por regra expressa. A nota é de R$ 1.000 e o tributo também, mesmo com R$ 900 recebidos."},
+{q:"Na renegociação, o locador concede desconto no primeiro ano sem nenhuma condição, já informado na nota. Como fica?", o:["É desconto incondicional: reduz a base e o tributo incide só sobre o valor efetivamente cobrado","Integra a base como o desconto de pontualidade","Exige uma nota de crédito no fim do ano","A reforma proíbe esse tipo de desconto"], w:"Desconto que não depende de nenhum evento e já vem na nota não entra na base."},
+{q:"Condomínio e IPTU reembolsados vêm na mesma cobrança do aluguel. Como tratar na nota?", o:["Não são tributados: entram na nota com cClassTrib/CST de não incidência","São tributados com a redução de 70%","Precisam de nota separada com alíquota cheia","Não podem aparecer na nota de locação"], w:"Reembolsos de condomínio, IPTU e outros tributos ficam fora da base. Há códigos próprios de não incidência."},
+{q:"Um médico pessoa física subloca uma sala da Rede. O que muda para ele?", o:["Ele não toma crédito, então a CBS/IBS destacada vira custo e o aluguel fica mais caro para ele","Ele toma crédito como qualquer empresa","Ele fica isento por ser profissional de saúde","A Rede recolhe o tributo e não repassa"], w:"Quem não é contribuinte não recupera o tributo. Esse aumento exige atenção na relação comercial."},
+{q:"Um inquilino optante do Simples Nacional pode tomar crédito do aluguel?", o:["Só se optar por recolher CBS/IBS pelo regime regular (modelo híbrido); senão, o tributo do aluguel é custo","Sim, sempre e de forma integral","Não, porque o Simples será extinto","Não há tributo no aluguel cobrado de optantes do Simples"], w:"O Simples pode seguir como está ou adotar o modelo híbrido para CBS/IBS. A adesão ao híbrido foi baixa."},
+{q:"O que é o cClassTrib?", o:["O código de classificação tributária que identifica a operação na nota, como locação com redução de 70% ou condomínio sem incidência","O cadastro nacional do imóvel","O código do município onde está o imóvel","O número do contrato de locação"], w:"Junto com o CST e a NBS, é o que parametriza o cálculo. Substitui a lógica que o CFOP tinha no ICMS."},
+{q:"O locador emite nota de crédito de R$ 100 para abater um reparo feito pela Rede. Qual é o efeito?", o:["Reduz o débito do locador e, na mesma medida, o crédito da Rede; por isso exige aceite de quem recebe","Não afeta a Rede, só o locador","Aumenta o crédito da Rede","Equivale a uma nota de crédito financeira, sem efeito fiscal"], w:"A Rede tomou crédito sobre a nota cheia. A nota de crédito anula a parte correspondente, e o sistema pede o aceite do adquirente."},
+{q:"Uma nota de locação saiu com erro. O que considerar?", o:["O cancelamento tem prazo curto e penalidade alta; o melhor é conferir antes de emitir e usar notas de ajuste quando couber","Pode ser cancelada livremente em até 30 dias","Basta reemitir, sem consequência","O erro é corrigido automaticamente na apuração"], w:"Com a emissão a incidência já ocorre. Por isso o controle precisa ser feito antes da nota sair."}
+]},
+{ title:"Contratos, crédito e obrigações", short:"Proteção do crédito e rotina", mins:9,
+  lesson:`
+<p class="lead">Na reforma, o crédito da Rede depende de o locador emitir a nota e pagar o tributo. Proteger esse crédito passa por mecanismos de pagamento, cláusulas contratuais e uma rotina de conferência.</p>
+<h3>Split payment</h3>
+<p>No momento do pagamento, a instituição financeira separa o valor líquido do fornecedor e envia o tributo direto ao governo.</p>
+<ul>
+<li><strong>Para quem recebe:</strong> perde o uso temporário do tributo no caixa (hoje ele fica com o dinheiro até o vencimento no mês seguinte). O efeito pesa no primeiro mês.</li>
+<li><strong>Para quem paga:</strong> é a garantia do crédito, porque o tributo foi retido na fonte.</li>
+<li>Previsão do governo: a partir de 2028.</li>
+</ul>
+<h3>Recolhimento pelo adquirente (RAD)</h3>
+<p>A Rede paga o tributo em nome do locador para garantir o crédito. Mas não é uma escolha só da Rede:</p>
+<ul>
+<li>O locador precisa concordar: ele perde o caixa e continua sendo o responsável pelo tributo.</li>
+<li>Só é possível sobre nota emitida.</li>
+<li>Vira um compromisso de caixa permanente da Rede.</li>
+<li>Na prática, prevalece a vontade da parte mais forte da relação.</li>
+</ul>
+<h3>Quando o locador não emite nota</h3>
+<p>Sem nota, não há crédito. E a Rede mantém relação com um contribuinte irregular, o que traz risco de responsabilidade solidária perante o fisco. Falta de sistema não é justificativa: a nota pode ser emitida no site da prefeitura.</p>
+<h3>O que os contratos devem prever</h3>
+<ul>
+<li>Se o preço é <strong>líquido ou bruto</strong> de CBS/IBS.</li>
+<li>Obrigação de emitir nota fiscal, com CIB e códigos corretos.</li>
+<li><strong>Declaração</strong> do locador pessoa física sobre ser ou não contribuinte.</li>
+<li>Pagamento condicionado ao recebimento da nota.</li>
+<li>Previsão de RAD, quando houver acordo.</li>
+<li>Direito de regresso se o locador não recolher o tributo e a Rede perder o crédito.</li>
+<li>Separação de aluguel, condomínio, IPTU, multas e descontos.</li>
+</ul>
+<div class="callout sand"><span class="tag">Reequilíbrio</span><p>A LC 214 assegura reequilíbrio por mudança de carga em contratos com o poder público e concessões. Para locação entre particulares não há essa garantia: ajuste de preço é negociação.</p></div>
+<p>Cada situação entra numa matriz de risco: trocar o imóvel de um hospital é muito mais difícil do que trocar o de um escritório administrativo. Ações judiciais têm custo e devem ser exceção; o objetivo é o locador emitir a nota, pagar o tributo e a Rede se creditar.</p>
+<h3>Fluxo de pagamento de aluguel</h3>
+<ol class="tl">
+<li><time>1</time><p>Receber a nota fiscal do locador.</p></li>
+<li><time>2</time><p>Validar: CIB, cClassTrib, NBS, alíquota e valores. O que está na nota é o que vai para o crédito. De preferência com leitor de XML.</p></li>
+<li><time>3</time><p>Aprovar.</p></li>
+<li><time>4</time><p>Pagar.</p></li>
+<li><time>5</time><p>Conferir o crédito na apuração assistida.</p></li>
+</ol>
+<h3>Obrigações acessórias</h3>
+<div class="tbl"><table><thead><tr><th>Obrigação</th><th>O que é</th></tr></thead><tbody>
+<tr><td>Nota fiscal de locação</td><td>Obrigatória desde 01/12/2026, com campos de CBS/IBS.</td></tr>
+<tr><td><code>CIB</code></td><td>Cadastro Imobiliário Brasileiro, o "CPF do imóvel", já atribuído pelo governo e consultável no Sinter. Obrigatório na nota de locação; o layout aceita até 99 unidades imobiliárias por nota.</td></tr>
+<tr><td>DIMOB</td><td>Declaração anual de atividades imobiliárias. Quem subloca também precisa entregar.</td></tr>
+<tr><td>Cadastro do locador PF</td><td>Quando ele for contribuinte.</td></tr>
+<tr><td>CNAE de locação</td><td>Recomendado como secundário. Não há multa por não ter, mas alguns municípios, como Campinas, só liberam códigos de serviço compatíveis com o CNAE.</td></tr>
+</tbody></table></div>
+<h3>Próximos passos</h3>
+<ol>
+<li>Classificar os maiores contratos e revisar suas cláusulas.</li>
+<li>Levantar o CIB de cada imóvel.</li>
+<li>Ajustar as políticas de recebimento e pagamento para a nota fiscal de locação.</li>
+<li>Identificar onde a Rede está descoberta e qual o custo desse risco.</li>
+</ol>`,
+  qs:[
+{q:"Qual é o efeito do split payment para quem recebe e para quem paga?", o:["Quem recebe perde o uso temporário do tributo no caixa; quem paga ganha a garantia do crédito","Aumenta a carga tributária das duas partes","Elimina a necessidade de nota fiscal","Só se aplica a pessoas físicas"], w:"O banco separa e envia o tributo na hora do pagamento. É impacto de caixa para o recebedor e segurança de crédito para o pagador."},
+{q:"O que é o RAD?", o:["O recolhimento do tributo pelo adquirente em nome do fornecedor, para garantir o crédito, desde que o fornecedor concorde e haja nota","Uma obrigação que o locatário pode impor sem acordo","Um documento que substitui a nota fiscal","Um desconto concedido pelo governo"], w:"O RAD é uma escolha conjunta. O locador pode recusar por causa do caixa e porque segue responsável pelo tributo."},
+{q:"O locador se recusa a emitir nota. Quais são as consequências para a Rede?", o:["Fica sem crédito e mantém relação com um contribuinte irregular, com risco de responsabilidade solidária","A Rede emite a nota no lugar dele","A Rede ganha crédito presumido","Nenhuma, se o pagamento for feito"], w:"Sem nota não entra nada na apuração assistida. E a irregularidade do locador pode respingar na Rede."},
+{q:"Um locador pessoa física diz que não é contribuinte. O que fazer?", o:["Obter uma declaração formal dele, porque essa informação não é pública","Consultar a condição dele em um cadastro público da Receita","Presumir que é contribuinte e reter o tributo","Ignorar, porque não traz nenhum risco"], w:"Só o locador sabe quantos imóveis tem e quanto recebeu. A declaração protege a Rede em caso de questionamento."},
+{q:"A Rede tem direito garantido em lei a reequilibrar o aluguel por mudança de alíquota?", o:["Não: a LC 214 assegura reequilíbrio para contratos com o poder público e concessões; na locação privada é negociação","Sim, em todo contrato de locação","Não, e a lei proíbe renegociar","Sim, aplicado automaticamente pelo índice de reajuste"], w:"O reequilíbrio previsto em lei não alcança contratos entre particulares."},
+{q:"Qual é a sequência adequada no fluxo de pagamento de aluguel?", o:["Receber a nota, validar, aprovar, pagar e conferir o crédito na apuração","Pagar e depois cobrar a nota do locador","Pagar por boleto e dispensar a nota","Validar as notas só no fechamento anual"], w:"A nota precisa vir antes do pagamento, porque o crédito depende do que está nela."},
+{q:"O que é o CIB?", o:["O Cadastro Imobiliário Brasileiro, o \"CPF do imóvel\", obrigatório na nota de locação","Um código de classificação tributária","O cadastro do locador pessoa física","Uma certidão de registro em cartório"], w:"O CIB já é atribuído pelo governo e pode ser consultado no Sinter. Cada nota de locação informa o CIB do imóvel."},
+{q:"O que é a DIMOB e quem entrega?", o:["A declaração anual de atividades imobiliárias; quem subloca também precisa entregar","Uma declaração só das imobiliárias","Uma declaração extinta pela reforma","A apuração mensal do IBS"], w:"A atividade de sublocação basta para tornar a empresa obrigada à DIMOB."},
+{q:"Por que se recomenda ter um CNAE secundário de locação?", o:["Porque alguns municípios só liberam a emissão de certos códigos de serviço se o CNAE for compatível","Porque a falta do CNAE gera multa automática","Porque hospitais não podem emitir nota de locação","Porque o CNAE substitui o cClassTrib"], w:"Não há penalidade direta, mas sem o CNAE a prefeitura pode travar a emissão da nota."},
+{q:"Qual deve ser a primeira ação sobre a carteira de mais de 200 contratos?", o:["Fazer um pente-fino: classificar por PJ ou PF, contribuinte ou não e cláusulas de preço e prazo, começando pelos maiores","Rescindir os contratos com pessoas físicas","Aguardar o split payment em 2028","Renegociar todos para um valor bruto fixo"], w:"Não existe fórmula única: cada contrato tem sua situação. A classificação dá a dimensão do problema e orienta as negociações."}
+]}
+];
+
+/* ---------- estado ---------- */
+const blank = () => ({name:"", mods: MODULES.map(()=>({best:0, passed:false, attempts:0})), completedAt:null, code:null});
+function load(){ try{ const s = JSON.parse(localStorage.getItem(STORE)); if(s && Array.isArray(s.mods) && s.mods.length===MODULES.length) return s; }catch(e){} return null; }
+function save(){ try{ localStorage.setItem(STORE, JSON.stringify(state)); }catch(e){} }
+let state = load() || blank();
+let view = {screen:"home", mod:0};
+let quiz = null;
+
+const $ = s => document.querySelector(s);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const pctTxt = v => Math.round(v*100)+"%";
+const unlocked = i => i===0 || state.mods[i-1].passed;
+const allPassed = () => state.mods.every(m=>m.passed);
+const finalScore = () => state.mods.reduce((a,m)=>a+m.best,0)/MODULES.length;
+function shuffle(a){ a=a.slice(); for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]];} return a; }
+function toast(msg){ const t=$("#toast"); t.textContent=msg; t.classList.add("show"); clearTimeout(toast._t); toast._t=setTimeout(()=>t.classList.remove("show"),3200); }
+
+/* ---------- índice ---------- */
+function renderRail(){
+  const n = state.mods.filter(m=>m.passed).length;
+  $("#meterTxt").textContent = `${n} de ${MODULES.length}`;
+  $("#meterBar").style.width = (n/MODULES.length*100)+"%";
+  const items = MODULES.map((m,i)=>{
+    const st = state.mods[i], open = unlocked(i);
+    const cls = st.passed ? "done" : open ? "open" : "";
+    const sub = st.passed ? `<small class="ok">Aprovado · ${pctTxt(st.best)}</small>` : open ? `<small>${st.attempts? "Em andamento":"Disponível"}</small>` : `<small>Bloqueado</small>`;
+    const cur = (view.screen!=="home" && view.screen!=="cert" && view.mod===i);
+    return `<li class="${cls}"><button class="mod-btn" data-go="${i}" ${open?"":"disabled"} aria-current="${cur}">
+      <span class="num">${st.passed?"✓":i+1}</span><span class="mod-txt"><b>${esc(m.title)}</b>${sub}</span></button></li>`;
+  }).join("");
+  const done = allPassed();
+  const cert = `<li class="${done?"done":""}"><button class="mod-btn" data-cert ${done?"":"disabled"} aria-current="${view.screen==="cert"}">
+    <span class="num">★</span><span class="mod-txt"><b>Conclusão</b><small${done?' class="ok"':""}>${done?"Trilha concluída":"Após os 6 módulos"}</small></span></button></li>`;
+  $("#mods").innerHTML = items + cert;
+}
+
+/* ---------- telas ---------- */
+function nextModule(){ const i = state.mods.findIndex(m=>!m.passed); return i<0 ? null : i; }
+
+function renderHome(){
+  const nx = nextModule(), started = state.mods.some(m=>m.attempts>0);
+  const cta = nx===null ? `<button class="btn" data-cert>Ver minha conclusão</button>`
+    : `<button class="btn" data-go="${nx}">${started?"Continuar":"Começar"}: Módulo ${nx+1}</button>`;
+  return `<span class="eyebrow">Trilha de capacitação · Reforma Tributária</span>
+  <h1>${TRAIL}</h1>
+  <p class="lead">O que muda na locação, na sublocação e nos contratos imobiliários da Rede Américas com a chegada da CBS e do IBS: quando paga, quanto paga, quem emite nota e como garantir o crédito.</p>
+  <div class="facts">
+    <div class="fact"><b>6</b><span>módulos em sequência</span></div>
+    <div class="fact"><b>60</b><span>questões, 10 por módulo</span></div>
+    <div class="fact"><b>70%</b><span>para aprovação (7 de 10)</span></div>
+    <div class="fact"><b>6/6</b><span>módulos para concluir a trilha</span></div>
+  </div>
+  <div class="read"><p>Cada módulo tem um texto de apoio e uma avaliação. O módulo seguinte só é liberado depois da aprovação no anterior. Se não atingir 70%, você vê quais questões errou, revisa o conteúdo e refaz a avaliação com as perguntas em nova ordem.</p></div>
+  <div class="field"><label for="nameHome">Seu nome completo</label>
+    <input id="nameHome" type="text" autocomplete="name" placeholder="Ex.: Maria Aparecida dos Santos" value="${esc(state.name)}">
+    <span class="hint">O nome aparece no registro de conclusão da trilha.</span></div>
+  <div class="actions">${cta}</div>
+  <p class="note">Conteúdo baseado nos treinamentos de Reforma Tributária para Gestão Imobiliária realizados em 21/10/2026, com base na EC 132/2023, na LC 214/2025 e na LC 227/2026. Alíquotas citadas são estimativas e podem mudar. Seu progresso fica salvo neste navegador.</p>`;
+}
+
+function renderLesson(i){
+  const m = MODULES[i], st = state.mods[i];
+  const status = st.passed ? `<span class="pill ok">Aprovado com ${pctTxt(st.best)}</span>` : st.attempts ? `<span class="pill bad">Ainda não aprovado · melhor nota ${pctTxt(st.best)}</span>` : "";
+  const nextBtn = st.passed && i<MODULES.length-1 ? `<button class="btn" data-go="${i+1}">Ir para o Módulo ${i+2}</button>` : st.passed && allPassed() ? `<button class="btn" data-cert>Ver registro de conclusão</button>` : "";
+  return `<span class="eyebrow">Módulo ${i+1} de ${MODULES.length}</span>
+  <h2>${esc(m.title)}</h2>
+  <p class="meta">Leitura de ${m.mins} min · ${m.qs.length} questões · aprovação com ${Math.ceil(m.qs.length*PASS)} acertos ${status}</p>
+  <div class="read">${m.lesson}</div>
+  <div class="actions">${nextBtn}<button class="btn ${st.passed?"ghost":""}" data-quiz="${i}">${st.passed?"Refazer avaliação":"Fazer a avaliação do módulo"}</button></div>`;
+}
+
+function startQuiz(i){
+  const m = MODULES[i];
+  quiz = { mod:i, idx:0, items: shuffle(m.qs.map((_,k)=>k)).map(k=>({k, order: shuffle([0,1,2,3]), pick:null})) };
+  view = {screen:"quiz", mod:i}; render();
+}
+function renderQuiz(){
+  const m = MODULES[quiz.mod], it = quiz.items[quiz.idx], q = m.qs[it.k], total = quiz.items.length;
+  const answered = quiz.items.filter(x=>x.pick!==null).length;
+  const opts = it.order.map((o,n)=>`<label class="opt" for="opt-${n}"><input type="radio" name="opt" id="opt-${n}" value="${o}" ${it.pick===o?"checked":""}><span>${esc(q.o[o])}</span></label>`).join("");
+  const last = quiz.idx===total-1;
+  const dots = quiz.items.map((x,n)=>`<button class="dot ${x.pick!==null?"ans":""} ${n===quiz.idx?"cur":""}" data-jump="${n}" aria-label="Questão ${n+1}">${n+1}</button>`).join("");
+  return `<div class="qhead"><span class="eyebrow">Avaliação · Módulo ${quiz.mod+1}: ${esc(m.title)}</span><span class="meta">${answered} de ${total} respondidas</span></div>
+  <div class="qprog"><i style="width:${(quiz.idx+1)/total*100}%"></i></div>
+  <p class="meta">Questão ${quiz.idx+1} de ${total}</p>
+  <p class="qtext" id="qtext">${esc(q.q)}</p>
+  <fieldset class="opts" aria-labelledby="qtext">${opts}</fieldset>
+  <div class="actions">
+    <button class="btn quiet" data-prev ${quiz.idx===0?"disabled":""}>Anterior</button>
+    ${last ? `<button class="btn" data-submit ${answered<total?"disabled":""}>Enviar respostas</button>` : `<button class="btn" data-next ${it.pick===null?"disabled":""}>Próxima</button>`}
+    <button class="btn ghost" data-go="${quiz.mod}">Voltar ao conteúdo</button>
+  </div>
+  ${last && answered<total ? `<p class="hint">Responda todas as questões para enviar. Faltam ${total-answered}.</p>` : ""}
+  <div class="dots" aria-label="Ir para a questão">${dots}</div>`;
+}
+
+function submitQuiz(){
+  const m = MODULES[quiz.mod];
+  const res = quiz.items.map(x=>({k:x.k, pick:x.pick, ok:x.pick===0}));
+  const right = res.filter(r=>r.ok).length, score = right/res.length, passed = score>=PASS-1e-9;
+  const st = state.mods[quiz.mod];
+  st.attempts++; st.best = Math.max(st.best, score); if(passed) st.passed = true;
+  if(allPassed() && !state.completedAt){ state.completedAt = new Date().toISOString(); }
+  save();
+  view = {screen:"result", mod:quiz.mod, res, right, score, passed};
+  quiz = null; render();
+}
+function renderResult(){
+  const {mod, res, right, score, passed} = view, m = MODULES[mod], need = Math.ceil(m.qs.length*PASS);
+  const ring = `<div class="ring" style="--p:${Math.round(score*100)};--c:${passed?"var(--ok-fill)":"var(--bad)"}"><div>${pctTxt(score)}</div></div>`;
+  let body;
+  if(passed){
+    body = `<h3>Gabarito comentado</h3><ol class="review">${res.map(r=>{const q=m.qs[r.k];return `<li class="${r.ok?"right":"wrong"}">
+      <p class="rq">${esc(q.q)}</p>
+      ${r.ok?"":`<p class="ra"><span class="no">Sua resposta:</span> ${esc(q.o[r.pick])}</p>`}
+      <p class="ra"><span class="yes">Resposta correta:</span> ${esc(q.o[0])}</p>
+      <p class="why">${esc(q.w)}</p></li>`;}).join("")}</ol>`;
+  } else {
+    const wrong = res.filter(r=>!r.ok);
+    body = `<h3>Questões a revisar</h3><p class="read">Releia o conteúdo do módulo com atenção a estes pontos. Na nova tentativa, a ordem das questões e das alternativas muda.</p>
+      <ol class="review">${wrong.map(r=>`<li class="wrong"><p class="rq">${esc(m.qs[r.k].q)}</p></li>`).join("")}</ol>`;
+  }
+  const next = passed ? (mod<MODULES.length-1 ? `<button class="btn" data-go="${mod+1}">Ir para o Módulo ${mod+2}</button>` : `<button class="btn" data-cert>Ver registro de conclusão</button>`)
+    : `<button class="btn" data-go="${mod}">Revisar o conteúdo</button><button class="btn ghost" data-quiz="${mod}">Refazer avaliação</button>`;
+  return `<span class="eyebrow">Resultado · Módulo ${mod+1}</span>
+  <div class="score">${ring}<div><h2>${passed?"Aprovado":"Ainda não foi desta vez"}</h2>
+    <p class="meta">${right} de ${res.length} acertos. ${passed?`A aprovação pede ${need}.`:`Para aprovar, são necessários ${need} acertos.`}</p>
+    <span class="pill ${passed?"ok":"bad"}">${passed?"Módulo concluído":"Não aprovado"}</span></div></div>
+  <div class="actions">${next}</div>${body}`;
+}
+
+/* ---------- conclusão ---------- */
+function hash(s){ let h=2166136261; for(const c of s){ h^=c.codePointAt(0); h=Math.imul(h,16777619);} return (h>>>0).toString(36).toUpperCase().padStart(7,"0"); }
+const recCode = () => "RT-GI-" + hash(state.name.trim().toLowerCase()+"|"+state.completedAt).slice(0,4) + "-" + hash(state.completedAt+"|"+Math.round(finalScore()*100)).slice(0,4);
+const fmtDate = d => d.toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit",year:"numeric"});
+function spaced(ctx, text, x, y, sp){ if("letterSpacing" in ctx){ ctx.letterSpacing=sp+"px"; ctx.fillText(text,x,y); ctx.letterSpacing="0px"; } else ctx.fillText(text,x,y); }
+function wrap(ctx, text, maxW){ const words=text.split(" "), lines=[]; let line=""; for(const w of words){ const t=line?line+" "+w:w; if(ctx.measureText(t).width>maxW && line){lines.push(line); line=w;} else line=t; } if(line) lines.push(line); return lines; }
+async function drawRecord(){
+  try{ await Promise.all(["600 60px Outfit","500 30px Outfit","400 30px Outfit","400 30px Literata","500 26px 'IBM Plex Mono'"].map(f=>document.fonts.load(f))); }catch(e){}
+  const W=1654, H=2339, c=document.createElement("canvas"); c.width=W; c.height=H; const x=c.getContext("2d");
+  const P="#642277", P2="#864893", LIL="#D4ABCC", INK="#22152A", MUT="#6A5873", LINE="#E2D5E6", SOFT="#F4EDF5";
+  const M=130, CW=W-2*M, now=new Date(), done=new Date(state.completedAt||Date.now());
+  x.fillStyle="#FFFFFF"; x.fillRect(0,0,W,H);
+  // cabeçalho
+  x.fillStyle=P; x.fillRect(0,0,W,250);
+  x.fillStyle="#FFFFFF"; x.font="600 64px Outfit, sans-serif"; x.fillText("Rede Américas",M,150);
+  x.fillStyle=LIL; x.font="500 24px Outfit, sans-serif"; x.textAlign="right"; spaced(x,"ÁREA DE REFORMA TRIBUTÁRIA",W-M,138,5); x.textAlign="left";
+  // título
+  x.fillStyle=P2; x.font="600 24px Outfit, sans-serif"; spaced(x,"REGISTRO DE CONCLUSÃO",M,380,6);
+  x.fillStyle=INK; x.font="600 58px Outfit, sans-serif"; x.fillText("Registro de conclusão de treinamento",M,460);
+  x.fillStyle=INK; x.font="400 30px Literata, Georgia, serif";
+  let y=550; for(const l of wrap(x,"A Área de Reforma Tributária da Rede Américas registra que o(a) participante abaixo concluiu a trilha de capacitação indicada, com aprovação mínima de 70% na avaliação de cada módulo.",CW)){ x.fillText(l,M,y); y+=48; }
+  // campos
+  y+=40;
+  const fields=[["Participante",state.name.trim()],["Trilha",TRAIL],["Data de conclusão",fmtDate(done)],["Aproveitamento final",Math.round(finalScore()*100)+"%"],["Módulos concluídos",`${MODULES.length} de ${MODULES.length} (${MODULES.length*10} questões)`],["Código do registro",recCode()]];
+  fields.forEach(([k,v],i)=>{
+    const rowH=92, ry=y+i*rowH;
+    if(i%2===0){ x.fillStyle=SOFT; x.fillRect(M,ry,CW,rowH); }
+    x.fillStyle=MUT; x.font="500 26px Outfit, sans-serif"; x.fillText(k,M+28,ry+56);
+    x.fillStyle=INK; x.font=(k==="Código do registro"?"500 28px 'IBM Plex Mono', monospace":(k==="Participante"?"600 34px Outfit, sans-serif":"400 32px Outfit, sans-serif"));
+    let fs=34, val=v; const vx=M+460, vw=CW-460-28;
+    while(x.measureText(val).width>vw && fs>20){ fs-=2; x.font=x.font.replace(/\d+px/,fs+"px"); }
+    x.fillText(val,vx,ry+56);
+  });
+  y+=fields.length*92+90;
+  // tabela de módulos
+  x.fillStyle=P2; x.font="600 24px Outfit, sans-serif"; spaced(x,"DESEMPENHO POR MÓDULO",M,y,6); y+=40;
+  const c2=M+CW-360, c3=M+CW-28;
+  x.fillStyle=MUT; x.font="500 24px Outfit, sans-serif"; y+=34;
+  x.fillText("Módulo",M+28,y); x.textAlign="right"; x.fillText("Melhor nota",c2+120,y); x.fillText("Tentativas",c3,y); x.textAlign="left";
+  y+=24; x.fillStyle=INK; x.fillRect(M,y,CW,2);
+  MODULES.forEach((m,i)=>{ const st=state.mods[i]; const ry=y+i*76;
+    x.fillStyle=INK; x.font="400 30px Outfit, sans-serif"; x.fillStyle=P2; x.fillText(String(i+1).padStart(2,"0"),M+28,ry+52);
+    x.fillStyle=INK; x.fillText(m.title,M+90,ry+52);
+    x.textAlign="right"; x.font="500 30px Outfit, sans-serif"; x.fillText(Math.round(st.best*100)+"%",c2+120,ry+52); x.font="400 30px Outfit, sans-serif"; x.fillText(String(st.attempts),c3,ry+52); x.textAlign="left";
+    x.fillStyle=LINE; x.fillRect(M,ry+76,CW,2);
+  });
+  // rodapé
+  const fy=H-210; x.fillStyle=LINE; x.fillRect(M,fy,CW,2);
+  x.fillStyle=MUT; x.font="400 24px Outfit, sans-serif";
+  x.fillText(`Documento gerado em ${fmtDate(now)} às ${now.toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"})}, a partir da trilha online de capacitação.`,M,fy+50);
+  x.fillText("Conteúdo baseado nos treinamentos de Reforma Tributária para Gestão Imobiliária de 21/10/2026.",M,fy+90);
+  x.fillText("Este documento é um registro de participação e aproveitamento; não constitui certificado.",M,fy+130);
+  return c;
+}
+async function saveFile(filename, blob){
+  if(window.claude && typeof window.claude.use==="function"){
+    try{
+      const dl = await window.claude.use("downloads");
+      if(dl){ await dl.save({filename, data: blob}); toast("Registro salvo."); return; }
+    }catch(e){
+      if(e && e.code==="declined"){ toast("Download cancelado."); return; }
+      if(e && e.code==="rate_limited"){ toast("Já existe um download aguardando confirmação."); return; }
+      toast("Não foi possível baixar o arquivo nesta visualização."); return;
+    }
+  }
+  const url = URL.createObjectURL(blob), a = document.createElement("a");
+  a.href=url; a.download=filename; document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(url),5000);
+}
+async function downloadRecord(){
+  if(!state.name.trim()){ toast("Informe seu nome completo antes de baixar."); return; }
+  if(!window.jspdf){ toast("O gerador de PDF não carregou. Recarregue a página e tente de novo."); return; }
+  const c = await drawRecord(); const pdf = new window.jspdf.jsPDF({orientation:"portrait", unit:"mm", format:"a4"});
+  pdf.addImage(c.toDataURL("image/jpeg",0.94),"JPEG",0,0,210,297);
+  pdf.setProperties({title:"Registro de conclusão - "+TRAIL, author:"Rede Américas - Área de Reforma Tributária"});
+  await saveFile("Registro de conclusao RT Gestao Imobiliaria - "+state.name.trim().replace(/[\\/:*?"<>|]/g,"")+".pdf", pdf.output("blob"));
+}
+function renderCert(){
+  if(!allPassed()){
+    const pend = MODULES.map((m,i)=>state.mods[i].passed?"":`<li>Módulo ${i+1}: ${esc(m.title)}</li>`).join("");
+    return `<span class="eyebrow">Conclusão</span><h2>Ainda faltam módulos</h2>
+    <div class="locked read"><p>A trilha é concluída com aprovação, de pelo menos 70%, em todos os módulos. Faltam:</p><ul>${pend}</ul></div>`;
+  }
+  const date = new Date(state.completedAt || Date.now()).toLocaleDateString("pt-BR",{day:"numeric",month:"long",year:"numeric"});
+  const name = state.name.trim();
+  const rows = MODULES.map((m,i)=>{ const st=state.mods[i]; return `<tr><td>${i+1}. ${esc(m.title)}</td><td class="n">${pctTxt(st.best)}</td><td class="n">${st.attempts}</td></tr>`; }).join("");
+  return `<span class="eyebrow">Registro de conclusão</span><h2>Trilha concluída</h2>
+  <p class="lead">${name?esc(name)+" concluiu":"Você concluiu"} os ${MODULES.length} módulos da trilha ${TRAIL}, com aprovação em todas as avaliações.</p>
+  <div class="record">
+    <div><span>Participante</span><b>${name?esc(name):"Nome não informado"}</b></div>
+    <div><span>Concluída em</span><b>${date}</b></div>
+    <div><span>Aproveitamento</span><b>${pctTxt(finalScore())}</b></div>
+    <div><span>Código do registro</span><b class="mono">${recCode()}</b></div>
+  </div>
+  <div class="field"><label for="nameCert">Nome completo no registro</label><input id="nameCert" type="text" autocomplete="name" placeholder="Digite seu nome" value="${esc(state.name)}"><span class="hint">Confira a grafia antes de baixar.</span></div>
+  <div class="actions"><button class="btn" data-record>Baixar registro de conclusão (PDF)</button></div>
+  <div class="tbl"><table><thead><tr><th>Módulo</th><th class="n">Melhor nota</th><th class="n">Tentativas</th></tr></thead><tbody>${rows}</tbody></table></div>
+  <p class="note">O aproveitamento é a média da melhor nota de cada módulo. Guarde o PDF como comprovante de que você realizou o treinamento.</p>`;
+}
+
+/* ---------- render e eventos ---------- */
+function render(){
+  const p = $("#page");
+  p.innerHTML = view.screen==="home" ? renderHome() : view.screen==="lesson" ? renderLesson(view.mod) : view.screen==="quiz" ? renderQuiz() : view.screen==="result" ? renderResult() : renderCert();
+  renderRail();
+}
+function go(screen, mod){ view = {screen, mod}; render(); window.scrollTo({top:0}); $("#page").focus({preventScroll:true}); }
+
+document.addEventListener("click", e=>{
+  const b = e.target.closest("button"); if(!b || b.disabled) return;
+  if(b.dataset.go!==undefined) return go("lesson", +b.dataset.go);
+  if(b.hasAttribute("data-cert")) return go("cert");
+  if(b.dataset.quiz!==undefined){ startQuiz(+b.dataset.quiz); window.scrollTo({top:0}); return; }
+  if(b.hasAttribute("data-next")){ quiz.idx++; render(); return; }
+  if(b.hasAttribute("data-prev")){ quiz.idx--; render(); return; }
+  if(b.dataset.jump!==undefined){ quiz.idx=+b.dataset.jump; render(); return; }
+  if(b.hasAttribute("data-submit")) return submitQuiz();
+  if(b.hasAttribute("data-record")) return downloadRecord();
+});
+document.addEventListener("change", e=>{
+  if(e.target.name==="opt" && quiz){ quiz.items[quiz.idx].pick = +e.target.value; render(); const r=document.querySelector('input[name="opt"]:checked'); if(r) r.focus(); }
+});
+document.addEventListener("change", e=>{ if(e.target.id==="nameCert" && view.screen==="cert") render(); });
+document.addEventListener("input", e=>{
+  if(e.target.id==="nameHome" || e.target.id==="nameCert"){ state.name = e.target.value; save(); }
+});
+document.querySelector(".brand").addEventListener("click", ()=>go("home"));
+document.querySelector(".brand").style.cursor="pointer";
+render();
+</script>
+</body>
+</html>
