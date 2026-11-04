@@ -1,0 +1,882 @@
+<!doctype html>
+<html lang="pt-BR" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Finanças na Reforma | Rede Américas</title>
+<style>:root{color-scheme:light}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=Literata:opsz,wght@7..72,400;7..72,600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+/* Layout: caderno de trilha — índice de módulos à esquerda (vira faixa no celular), página de leitura/avaliação à direita */
+:root{
+  --bg:#F6F2F7; --surface:#FFFFFF; --surface-2:#EFE7F1; --ink:#22152A; --muted:#66546F; --line:#E2D5E6;
+  --accent:#642277; --accent-2:#864893; --accent-soft:#F1E4F3; --on-accent:#FFFFFF;
+  --ok:#3D7A10; --ok-fill:#76C42B; --ok-soft:#E7F5DA; --bad:#B0243C; --bad-soft:#FBE5E9; --sand:#B3B394; --sand-soft:#F1F1E8;
+  --f-display:"Outfit", "Segoe UI", system-ui, sans-serif;
+  --f-read:"Literata", Georgia, "Times New Roman", serif;
+  --f-mono:"IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
+  --radius:10px;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#151018; --surface:#1E1623; --surface-2:#291F2F; --ink:#F2EAF4; --muted:#B9A8C0; --line:#3A2C42;
+  --accent:#CB93D6; --accent-2:#A368AA; --accent-soft:#33233B; --on-accent:#1A0F1E;
+  --ok:#A3DD6A; --ok-fill:#76C42B; --ok-soft:#21301A; --bad:#FF93A6; --bad-soft:#3B1C25; --sand:#C9C9A9; --sand-soft:#2A2A22;
+  color-scheme:dark }}
+:root[data-theme="dark"]{
+  --bg:#151018; --surface:#1E1623; --surface-2:#291F2F; --ink:#F2EAF4; --muted:#B9A8C0; --line:#3A2C42;
+  --accent:#CB93D6; --accent-2:#A368AA; --accent-soft:#33233B; --on-accent:#1A0F1E;
+  --ok:#A3DD6A; --ok-fill:#76C42B; --ok-soft:#21301A; --bad:#FF93A6; --bad-soft:#3B1C25; --sand:#C9C9A9; --sand-soft:#2A2A22;
+  color-scheme:dark }
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-display);font-size:15px;line-height:1.5;
+  padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px));padding-block:20px 48px}
+.app{max-width:1180px;margin:0 auto;display:grid;grid-template-columns:270px minmax(0,1fr);gap:28px;align-items:start}
+button{font:inherit;cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+/* Índice */
+.rail{position:sticky;top:calc(env(safe-area-inset-top, 0px) + 16px);display:flex;flex-direction:column;gap:18px}
+.brand{display:flex;flex-direction:column;gap:2px;padding:4px 2px}
+.brand b{font-weight:700;font-size:20px;letter-spacing:-.01em;color:var(--accent)}
+.brand span{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.meter{display:flex;flex-direction:column;gap:6px}
+.meter-row{display:flex;justify-content:space-between;font-size:13px;color:var(--muted)}
+.meter-row strong{color:var(--ink);font-variant-numeric:tabular-nums}
+.track{height:6px;border-radius:99px;background:var(--surface-2);overflow:hidden}
+.track i{display:block;height:100%;background:var(--accent);border-radius:99px;transition:width .4s}
+.mods{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:2px}
+.mod-btn{width:100%;display:grid;grid-template-columns:28px minmax(0,1fr);gap:10px;align-items:start;text-align:left;
+  background:transparent;border:0;border-radius:8px;padding:9px 8px;color:var(--ink)}
+.mod-btn:hover:not([disabled]){background:var(--surface-2)}
+.mod-btn[aria-current="true"]{background:var(--surface);box-shadow:inset 0 0 0 1px var(--line)}
+.mod-btn[disabled]{cursor:not-allowed;opacity:.55}
+.num{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;font-size:13px;font-weight:600;
+  border:1.5px solid var(--line);color:var(--muted);font-variant-numeric:tabular-nums}
+.done .num{background:var(--ok-fill);border-color:var(--ok-fill);color:#14230A}
+.open .num{border-color:var(--accent);color:var(--accent)}
+.mod-txt{display:flex;flex-direction:column;gap:1px;min-width:0}
+.mod-txt b{font-weight:500;font-size:14px;line-height:1.3}
+.mod-txt small{font-size:12px;color:var(--muted)}
+.mod-txt small.ok{color:var(--ok)}
+
+/* Página */
+.page{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:clamp(20px,4vw,44px);min-width:0}
+.eyebrow{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--accent-2);font-weight:600}
+h1{font-size:clamp(28px,4.2vw,42px);line-height:1.08;letter-spacing:-.02em;margin:10px 0 14px;text-wrap:balance;font-weight:600}
+h2{font-size:clamp(23px,3vw,30px);line-height:1.15;letter-spacing:-.015em;margin:8px 0 6px;text-wrap:balance;font-weight:600}
+h3{font-size:19px;line-height:1.25;margin:34px 0 8px;font-weight:600;text-wrap:balance}
+.meta{color:var(--muted);font-size:14px}
+.lead{font-family:var(--f-read);font-size:17px;line-height:1.65;max-width:66ch;color:var(--ink)}
+.read p,.read li{font-family:var(--f-read);font-size:16px;line-height:1.7;max-width:66ch}
+.read ul,.read ol{padding-left:1.2em;margin:8px 0}
+.read li{margin:4px 0}
+.read strong{font-weight:600}
+code,.mono{font-family:var(--f-mono);font-size:.88em;background:var(--surface-2);padding:1px 5px;border-radius:4px}
+.facts{display:flex;flex-wrap:wrap;gap:10px;margin:22px 0}
+.fact{display:flex;flex-direction:column;padding:12px 16px;border-radius:var(--radius);background:var(--surface-2);min-width:120px;flex:1 1 120px}
+.fact b{font-size:24px;font-weight:600;font-variant-numeric:tabular-nums;color:var(--accent)}
+.fact span{font-size:13px;color:var(--muted)}
+.field{display:flex;flex-direction:column;gap:6px;margin:22px 0 8px;max-width:520px}
+.field label{font-weight:500;font-size:14px}
+.field input{font:inherit;font-size:16px;padding:11px 13px;border-radius:8px;border:1.5px solid var(--line);background:var(--bg);color:var(--ink)}
+.field input:focus{border-color:var(--accent);outline:none}
+.hint{font-size:13px;color:var(--muted)}
+.actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:26px;align-items:center}
+.btn{border:0;border-radius:8px;padding:11px 18px;font-weight:600;font-size:15px;background:var(--accent);color:var(--on-accent)}
+.btn:hover{filter:brightness(1.08)}
+.btn[disabled]{opacity:.45;cursor:not-allowed;filter:none}
+.btn.ghost{background:transparent;color:var(--accent);box-shadow:inset 0 0 0 1.5px var(--accent)}
+.btn.quiet{background:var(--surface-2);color:var(--ink)}
+.note{font-size:13px;color:var(--muted);max-width:70ch;margin-top:26px;padding-top:16px;border-top:1px solid var(--line)}
+.callout{margin:18px 0;padding:14px 18px;border-radius:var(--radius);background:var(--accent-soft);max-width:70ch}
+.callout .tag{display:block;font-size:11px;letter-spacing:.14em;text-transform:uppercase;font-weight:600;color:var(--accent);margin-bottom:4px}
+.callout p{margin:4px 0}
+.callout.sand{background:var(--sand-soft)}
+.callout.sand .tag{color:var(--muted)}
+.tbl{overflow-x:auto;margin:14px 0;max-width:72ch}
+table{border-collapse:collapse;width:100%;font-size:14px}
+th,td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-weight:600;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+td.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.yes{color:var(--ok);font-weight:600}.no{color:var(--bad);font-weight:600}
+.pill{display:inline-block;font-size:12px;font-weight:600;padding:3px 10px;border-radius:99px}
+.pill.ok{background:var(--ok-soft);color:var(--ok)}.pill.bad{background:var(--bad-soft);color:var(--bad)}
+
+/* Linha do tempo */
+.tl{list-style:none;padding:0;margin:16px 0;display:flex;flex-direction:column;gap:0;max-width:70ch}
+.tl li{display:grid;grid-template-columns:96px minmax(0,1fr);gap:14px;padding:10px 0;border-bottom:1px solid var(--line)}
+.tl time{font-family:var(--f-mono);font-size:13px;color:var(--accent);font-weight:500;padding-top:2px}
+.tl p{margin:0;font-family:var(--f-read);font-size:15px;line-height:1.6}
+
+/* Gráfico de alíquota efetiva */
+.chart{margin:18px 0 6px;max-width:640px}
+.chart-legend{display:flex;flex-wrap:wrap;gap:14px;font-size:12px;color:var(--muted);margin-bottom:10px}
+.chart-legend i{display:inline-block;width:14px;height:0;border-top:2px dashed currentColor;vertical-align:middle;margin-right:6px}
+.chart-legend .lr{color:var(--bad)}.chart-legend .lp{color:var(--muted)}
+.bars{display:flex;flex-direction:column;gap:6px}
+.bar-row{display:grid;grid-template-columns:44px minmax(0,1fr) 54px;gap:10px;align-items:center;font-size:13px}
+.bar-row .y{font-family:var(--f-mono);color:var(--muted)}
+.bar-row .v{text-align:right;font-variant-numeric:tabular-nums;font-weight:600}
+.bar-track{position:relative;height:18px;background:var(--surface-2);border-radius:4px}
+.bar-track b{position:absolute;inset:0 auto 0 0;background:var(--accent-2);border-radius:4px}
+.bar-row.last .bar-track b{background:var(--accent)}
+.mark{position:absolute;top:-3px;bottom:-3px;border-left:2px dashed}
+.mark.r{border-color:var(--bad)}.mark.p{border-color:var(--muted)}
+.chart-axis{display:grid;grid-template-columns:44px minmax(0,1fr) 54px;gap:10px;font-size:11px;color:var(--muted);margin-top:4px}
+.chart-axis div{display:flex;justify-content:space-between;font-variant-numeric:tabular-nums}
+
+/* Avaliação */
+.qhead{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+.qprog{height:4px;background:var(--surface-2);border-radius:99px;margin:12px 0 24px;overflow:hidden}
+.qprog i{display:block;height:100%;background:var(--accent);transition:width .3s}
+.qtext{font-size:clamp(18px,2.4vw,22px);line-height:1.35;font-weight:500;margin:0 0 18px;max-width:62ch;text-wrap:pretty}
+.opts{display:flex;flex-direction:column;gap:10px;max-width:72ch;border:0;padding:0;margin:0}
+.opt{display:grid;grid-template-columns:22px minmax(0,1fr);gap:12px;align-items:start;padding:13px 16px;border-radius:var(--radius);
+  border:1.5px solid var(--line);background:var(--bg);cursor:pointer;transition:border-color .15s, background .15s}
+.opt:hover{border-color:var(--accent-2)}
+.opt input{margin:3px 0 0;width:18px;height:18px;accent-color:var(--accent)}
+.opt span{font-family:var(--f-read);font-size:15.5px;line-height:1.55}
+.opt:has(input:checked){border-color:var(--accent);background:var(--accent-soft)}
+.dots{display:flex;flex-wrap:wrap;gap:6px;margin-top:22px}
+.dot{width:28px;height:28px;border-radius:6px;border:1.5px solid var(--line);background:transparent;font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
+.dot.ans{background:var(--surface-2);color:var(--ink)}
+.dot.cur{border-color:var(--accent);color:var(--accent)}
+
+/* Resultado */
+.score{display:flex;align-items:center;gap:22px;flex-wrap:wrap;margin:14px 0 6px}
+.ring{--p:0;width:110px;height:110px;border-radius:50%;display:grid;place-items:center;
+  background:conic-gradient(var(--c) calc(var(--p)*1%), var(--surface-2) 0)}
+.ring div{width:84px;height:84px;border-radius:50%;background:var(--surface);display:grid;place-items:center;font-size:26px;font-weight:600;font-variant-numeric:tabular-nums}
+.review{list-style:none;padding:0;margin:20px 0 0;display:flex;flex-direction:column;gap:12px;max-width:76ch}
+.review li{padding:14px 16px;border-radius:var(--radius);background:var(--bg);border:1px solid var(--line)}
+.review li.wrong{border-left:4px solid var(--bad)}
+.review li.right{border-left:4px solid var(--ok-fill)}
+.review .rq{font-weight:500;margin:0 0 8px}
+.review .ra{font-family:var(--f-read);font-size:14.5px;margin:3px 0;line-height:1.55}
+.review .why{font-family:var(--f-read);font-size:14.5px;color:var(--muted);margin-top:8px;line-height:1.55}
+
+/* Conclusão */
+.record{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;margin:22px 0 8px;max-width:760px}
+.record div{padding:12px 16px;border-radius:var(--radius);background:var(--surface-2);display:flex;flex-direction:column;gap:2px;min-width:0}
+.record span{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.record b{font-size:18px;font-weight:600;overflow-wrap:anywhere;font-variant-numeric:tabular-nums}
+.locked{padding:16px 18px;background:var(--surface-2);border-radius:var(--radius);max-width:60ch}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom, 0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);
+  padding:10px 16px;border-radius:8px;font-size:14px;opacity:0;pointer-events:none;transition:opacity .2s;max-width:calc(100% - 32px)}
+.toast.show{opacity:1}
+
+@media (max-width:860px){
+  .app{grid-template-columns:minmax(0,1fr);gap:16px}
+  .rail{position:static}
+  .mods{flex-direction:row;overflow-x:auto;gap:6px;padding-bottom:4px;scroll-snap-type:x mandatory}
+  .mods li{flex:0 0 auto;scroll-snap-align:start}
+  .mod-btn{grid-template-columns:28px auto;max-width:220px;border:1px solid var(--line);background:var(--surface)}
+  .tl li{grid-template-columns:78px minmax(0,1fr)}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="rail" aria-label="Módulos da trilha">
+    <div class="brand"><b>Rede Américas</b><span>Reforma Tributária</span></div>
+    <div class="meter">
+      <div class="meter-row"><span>Progresso</span><strong id="meterTxt">0 de 6</strong></div>
+      <div class="track"><i id="meterBar" style="width:0%"></i></div>
+    </div>
+    <ul class="mods" id="mods"></ul>
+  </aside>
+  <main class="page" id="page" tabindex="-1"></main>
+</div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+const PASS = 0.7;
+const STORE = "ra-rt-trilha-financas-v1";
+const TRAIL = "Reforma Tributária em Finanças";
+
+/* Alíquota efetiva estimada de IBS/CBS para saúde (redução de 60%), com CBS 9,21% e IBS 18,70% */
+const RATES = [["2027",3.68],["2028",3.68],["2029",4.43],["2030",5.18],["2031",5.93],["2032",6.68],["2033",11.16]];
+function rateChart(){
+  const max = 12, pct = v => (v/max*100).toFixed(1)+"%";
+  const rows = RATES.map(([y,v],i)=>`<div class="bar-row${i===RATES.length-1?" last":""}"><span class="y">${y}</span>
+    <div class="bar-track"><b style="width:${pct(v)}"></b><i class="mark p" style="left:${pct(3.65)}"></i></div>
+    <span class="v">${v.toFixed(2).replace(".",",")}%</span></div>`).join("");
+  return `<div class="chart" role="img" aria-label="Alíquota efetiva estimada de IBS e CBS para saúde: 3,68% em 2027 e 2028, subindo até 6,68% em 2032 e 11,16% em 2033. Referência: 3,65% do PIS/Cofins cumulativo pago hoje.">
+    <div class="chart-legend"><span class="lp"><i></i>PIS/Cofins cumulativo hoje: 3,65%</span></div>
+    <div class="bars">${rows}</div>
+    <div class="chart-axis"><span></span><div><span>0%</span><span>6%</span><span>12%</span></div><span></span></div></div>`;
+}
+
+const MODULES = [
+{ title:"Fundamentos da reforma", short:"IVA dual, pilares e transição", mins:10,
+  lesson:`
+<p class="lead">A reforma em curso trata só da tributação sobre o consumo: PIS, Cofins, IPI, ICMS e ISS. Imposto de renda, CSLL e contribuições sobre a folha ficam de fora. Para Finanças, ela muda o valor do tributo, a forma de contabilizar, o momento em que o caixa sai e os documentos que acompanham cada cobrança.</p>
+<h3>Quem sai e quem entra</h3>
+<div class="tbl"><table><thead><tr><th>Hoje</th><th>Com a reforma</th><th>Competência</th></tr></thead><tbody>
+<tr><td>PIS, Cofins e IPI</td><td><strong>CBS</strong> (Contribuição sobre Bens e Serviços)</td><td>União, com a Receita Federal</td></tr>
+<tr><td>ICMS e ISS</td><td><strong>IBS</strong> (Imposto sobre Bens e Serviços)</td><td>Estados, DF e municípios, de forma compartilhada</td></tr>
+<tr><td>—</td><td>Imposto Seletivo</td><td>União (bens prejudiciais à saúde ou ao meio ambiente; não alcança os serviços da Rede)</td></tr>
+</tbody></table></div>
+<p>O IBS é um tributo único em todo o país. Cada estado e cada município fixa a sua parcela da alíquota, mas a regulamentação, a arrecadação e a distribuição passam pelo <strong>Comitê Gestor do IBS</strong>, formado por 27 representantes dos estados e do DF e 27 dos municípios.</p>
+<h3>As normas, da maior para a menor</h3>
+<ul>
+<li><strong>Emenda Constitucional 132/2023</strong>: aprova a reforma.</li>
+<li><strong>Lei Complementar 214/2025</strong>: a principal referência, chamada no treinamento de "bíblia do tributarista". <strong>LC 227/2026</strong>: complementa e ajusta a LC 214.</li>
+<li><strong>Regulamentos</strong>: Decreto 12.955/2026 (CBS) e Resolução CGIBS 6/2026 (IBS), publicados em 2026.</li>
+<li><strong>Atos Conjuntos RFB/CGIBS</strong>: orientações operacionais, no papel que hoje cabe às instruções normativas. O regulamento remete a eles mais de cem vezes, e muitos ainda não saíram.</li>
+</ul>
+<div class="callout"><span class="tag">Na prática</span><p>A reforma está "trocando a roda com o carro andando". Haverá pontos sem resposta na primeira apuração. A conduta é adotar uma premissa fundamentada, junto com o Tributário e o Jurídico, registrar a decisão e ajustar quando a regra sair.</p></div>
+<h3>Princípios e pilares</h3>
+<p>Os princípios são <strong>neutralidade, não cumulatividade, transparência e simplicidade</strong>. Eles se traduzem em quatro mudanças de estrutura:</p>
+<ol>
+<li><strong>Não cumulatividade plena.</strong> Todo tributo pago nas compras ligadas à atividade vira crédito, exceto o que for uso e consumo pessoal. É o ponto de maior impacto para a Rede, que hoje está no regime cumulativo e não recupera nada.</li>
+<li><strong>Tributação por fora.</strong> IBS e CBS não entram na própria base nem incidem um sobre o outro. O preço é definido e o tributo é destacado e somado a ele, inclusive na transição. Valor da operação e tributo passam a ser controlados separadamente.</li>
+<li><strong>Tributação no destino.</strong> O IBS vai para o local de consumo. O ISS da Rede continua indo para o local da prestação enquanto existir.</li>
+<li><strong>Base ampla.</strong> O tributo alcança qualquer operação onerosa, não só mercadorias e serviços (módulo 2).</li>
+</ol>
+<h3>Como o crédito funciona na cadeia</h3>
+<p>Exemplo do treinamento, com alíquota ilustrativa de 20% e redução de 60% para saúde e medicamentos (alíquota efetiva de 8%):</p>
+<div class="tbl"><table><thead><tr><th>Etapa</th><th class="n">Base</th><th class="n">Débito</th><th class="n">Crédito</th><th class="n">Recolhe</th></tr></thead><tbody>
+<tr><td>Fornecedor vende medicamentos</td><td class="n">R$ 1.000</td><td class="n">R$ 80</td><td class="n">—</td><td class="n">R$ 80</td></tr>
+<tr><td>Hospital fatura o atendimento</td><td class="n">R$ 1.500</td><td class="n">R$ 120</td><td class="n">R$ 80</td><td class="n"><strong>R$ 40</strong></td></tr>
+<tr><td>Paciente ou tomador paga R$ 1.620</td><td class="n"></td><td class="n"></td><td class="n">Nenhum</td><td class="n">Suporta R$ 120</td></tr>
+</tbody></table></div>
+<p>Os R$ 40 equivalem a 8% sobre os R$ 500 que o hospital agregou. Quem arca com o tributo é o último da cadeia, que não toma crédito. A redução incide sobre a alíquota, não sobre o crédito.</p>
+<h3>Alíquotas estimadas</h3>
+<p>A alíquota de referência estimada é de <strong>27,91%</strong>: <strong>9,21% de CBS</strong> e <strong>18,70% de IBS</strong>. A estimativa começou em 26,5% e subiu à medida que setores ganharam reduções, porque a premissa é manter a arrecadação. Hoje seria o maior IVA do mundo, acima dos 27% da Hungria. A lei prevê revisões periódicas.</p>
+<p>Serviços de saúde, medicamentos e dispositivos médicos têm <strong>redução de 60%</strong>: paga-se 40% da alíquota, ou <strong>11,16%</strong> quando a reforma estiver completa, em 2033.</p>
+<div class="callout"><span class="tag">Regimes</span><p>O hospital fica na regra geral: débito, crédito e apuração assistida, com alíquota reduzida. As operadoras de planos de saúde têm regime específico: deduzem da base o que pagam aos prestadores e não tomam crédito do IBS/CBS do hospital.</p></div>
+<h3>Transição</h3>
+<ol class="tl">
+<li><time>2026</time><p>Ano de teste: CBS de 0,9% e IBS de 0,1% destacados nas notas, sem recolhimento. Sistemas e documentos fiscais em adaptação.</p></li>
+<li><time>2027–2028</time><p>PIS e Cofins extintos. CBS em vigor, com IBS ainda em 0,1%. ICMS e ISS continuam integrais.</p></li>
+<li><time>2029–2032</time><p>O IBS sobe para 10%, 20%, 30% e 40% da referência, enquanto ICMS e ISS caem para 90%, 80%, 70% e 60%.</p></li>
+<li><time>2033</time><p>ICMS e ISS extintos. Reforma plena: saúde a 11,16%.</p></li>
+</ol>
+<div class="callout sand"><span class="tag">Dois sistemas em paralelo</span><p>Até 2032 convivem dois sistemas, cada um com regras próprias. O erro mais comum é misturar: um reembolso não tem ISS, porque não é serviço, mas pode ter CBS, porque é operação onerosa. Cada pergunta deve ser respondida dentro das regras do tributo em questão.</p></div>
+<p class="hint">Alíquotas de referência são estimativas e podem mudar até a implementação plena.</p>`,
+  qs:[
+{q:"Quais tributos atuais são substituídos pela CBS?", o:["PIS, Cofins e IPI","ICMS e ISS","IRPJ e CSLL","PIS, Cofins e ISS"], w:"A CBS é o tributo federal que substitui PIS, Cofins e IPI. ICMS e ISS dão lugar ao IBS. Imposto de renda e CSLL não fazem parte desta reforma."},
+{q:"Como funciona a competência do IBS?", o:["Tributo único, com parcelas de estados e municípios na alíquota e gestão pelo Comitê Gestor","Cada município cobra o próprio IBS, com lei e regulamento locais, como hoje no ISS","Tributo federal, administrado e fiscalizado só pela Receita Federal, como a CBS","Os estados cobram o IBS sobre mercadorias e os municípios, sobre os serviços"], w:"O IBS substitui ICMS e ISS com competência compartilhada. O Comitê Gestor tem 27 representantes dos estados e do DF e 27 dos municípios."},
+{q:"No exemplo do treinamento, o fornecedor vende R$ 1.000 em medicamentos e o hospital fatura o atendimento por R$ 1.500, ambos com alíquota efetiva de 8%. Quanto o hospital recolhe?", o:["R$ 40: débito de R$ 120 menos crédito de R$ 80","R$ 120: o débito integral do atendimento","R$ 80: o mesmo valor recolhido pelo fornecedor","R$ 200: a soma dos dois débitos"], w:"O hospital apura R$ 120 de débito, aproveita os R$ 80 destacados na compra e recolhe a diferença. É o tributo sobre os R$ 500 que ele agregou."},
+{q:"Quem suporta o tributo final na cadeia de IBS e CBS?", o:["O último adquirente, que não toma crédito, como o paciente","O primeiro fornecedor da cadeia, que não tem crédito anterior","Cada etapa, sobre o valor total da sua venda, sem compensação","O hospital, por prestar o serviço final ao paciente"], w:"Cada contribuinte recupera o que pagou nas etapas anteriores. Quem não tem como se creditar, o consumidor final, arca com o tributo."},
+{q:"Qual é a alíquota de referência estimada de IBS e CBS apresentada no treinamento?", o:["Cerca de 27,91%: 9,21% de CBS e 18,70% de IBS","26,5%, a estimativa inicial, que foi mantida","11,16%, válida para todas as atividades","18%, somando CBS e IBS"], w:"A estimativa partiu de 26,5% e subiu para cerca de 27,91% conforme setores ganharam reduções, porque a premissa é preservar a arrecadação."},
+{q:"Qual é a alíquota efetiva estimada de IBS/CBS sobre os serviços de saúde da Rede em 2033, antes dos créditos?", o:["11,16%, que é 40% de 27,91%","27,91%, a alíquota cheia","8,37%, com redução de 70%","3,68%, a mesma de 2027"], w:"Saúde, medicamentos e dispositivos médicos têm redução de 60%: paga-se 40% da alíquota de referência. Os créditos nas compras reduzem a carga líquida."},
+{q:"O que significa a tributação \"por fora\"?", o:["IBS e CBS não entram na própria base: são destacados e somados ao preço","O cliente paga o tributo direto ao governo, sem passar pela nota fiscal","O tributo segue embutido no preço, como hoje, pelo mecanismo de gross-up","Só operações com destino a outro estado passam a ser tributadas"], w:"Hoje o tributo vem embutido no preço. Na reforma, ele é calculado sobre o preço e destacado, o que obriga a separar valor da operação e tributo nos controles."},
+{q:"O que acontece em janeiro de 2027?", o:["PIS e Cofins são extintos e a CBS entra em vigor; ICMS e ISS continuam integrais","ICMS e ISS são extintos e o IBS entra com alíquota cheia","Começa o ano de teste, sem recolhimento de nenhum tributo novo","Todos os tributos atuais são extintos de uma vez"], w:"Em 2027 a CBS substitui PIS/Cofins. O IBS segue em alíquota mínima até 2028 e só cresce de 2029 a 2032, enquanto ICMS e ISS caem até a extinção em 2033."},
+{q:"Como as operadoras de planos de saúde são tributadas?", o:["Têm regime específico: deduzem da base o que pagam aos prestadores","Seguem a regra geral de débito e crédito, igual à do hospital","São isentas de IBS e CBS por atuarem no setor de saúde","Pagam a alíquota cheia de 27,91%, sem nenhuma dedução de base"], w:"O hospital fica na regra geral, com alíquota reduzida. As operadoras têm regime próprio, baseado em dedução de base e também com redução de 60%, e não tomam crédito do IBS/CBS do hospital."},
+{q:"Durante a transição, um colega pergunta se o reembolso de uma despesa terá ISS. Qual é a forma correta de analisar?", o:["Separar os sistemas: não há ISS, mas pode haver CBS","Se não há ISS, também não há CBS, porque seguem a mesma regra","Aplicar a regra do ISS aos dois tributos durante a transição","Aplicar a regra da CBS também ao ISS, que passa a seguir a reforma"], w:"Até 2032 convivem dois sistemas com regras próprias. Não há ISS porque reembolso não é serviço; pode haver CBS porque é operação onerosa."}
+]},
+
+{ title:"Operações onerosas e base de cálculo", short:"Juros, descontos, reembolsos e intercompany", mins:9,
+  lesson:`
+<p class="lead">IBS e CBS não perguntam se a operação é mercadoria ou serviço. Perguntam se é <strong>onerosa</strong>, isto é, se há contraprestação. Por isso operações financeiras do dia a dia, que hoje passam sem documento fiscal, entram no radar de Finanças.</p>
+<h3>O que é operação onerosa (LC 214/2025, art. 4º)</h3>
+<p>Qualquer fornecimento com contraprestação: compra e venda, troca, dação em pagamento, locação, licenciamento e cessão, mútuo oneroso, doação com contraprestação, arrendamento e prestação de serviços.</p>
+<h3>Onde não incidem</h3>
+<ul>
+<li>Serviços prestados por empregados (a folha de pagamento).</li>
+<li>Transferências entre estabelecimentos do mesmo contribuinte.</li>
+<li>Fusões, cisões e incorporações; doações sem contraprestação.</li>
+<li><strong>Rendimentos financeiros</strong>, como os de aplicações, salvo no regime específico de serviços financeiros; dividendos e juros sobre capital próprio.</li>
+</ul>
+<div class="callout"><span class="tag">Primeira tarefa de Finanças</span><p>Levantar a lista de <strong>todas as operações onerosas</strong> do contas a pagar e do contas a receber. O Tributário analisa cada uma: ser onerosa não significa, necessariamente, ter IBS/CBS, mas tudo precisa ser avaliado.</p></div>
+<h3>Operações que hoje passam sem tributo</h3>
+<div class="tbl"><table><thead><tr><th>Operação</th><th>Hoje</th><th>Com IBS/CBS</th></tr></thead><tbody>
+<tr><td>Juros e multas por atraso</td><td>Receita financeira, sem ISS; cobrança por nota de débito comercial</td><td>Integram a base quando ligados ao fornecimento; cobrança por nota de débito fiscal</td></tr>
+<tr><td>Descontos</td><td>Condicional tratado como despesa financeira</td><td>Incondicional, dado na nota, sai da base; condicional integra a base</td></tr>
+<tr><td>Reembolsos e ressarcimentos</td><td>Cobrados sem tributo</td><td>Fora da base só se por conta e ordem de terceiro, com documento em nome dele</td></tr>
+<tr><td>Glosas e vendas canceladas</td><td>Dedução da receita bruta</td><td>O débito nasce no fornecimento; a reversão exige cancelamento ou documento de ajuste</td></tr>
+<tr><td>Intercompany</td><td>PIS/Cofins cumulativo, sem crédito para o comprador</td><td>Débito no fornecedor e crédito no adquirente, a valor de mercado</td></tr>
+<tr><td>Outras receitas</td><td>PIS/Cofins não cumulativo</td><td>Banco de sangue e concessão de folha, por exemplo, são operações onerosas</td></tr>
+</tbody></table></div>
+<h3>Juros e multas × rendimento financeiro</h3>
+<p>Rendimento de aplicação financeira não tem IBS/CBS. Juros e multa cobrados por atraso numa operação de serviço, sim: eles fazem parte do fornecimento. Se a Rede paga juros e multa a um fornecedor, passa a exigir dele a nota de débito, e se credita do tributo destacado, não da despesa total.</p>
+<h3>Descontos</h3>
+<p>Uma nota de R$ 100 com a condição "pague até o dia 10 e ganhe R$ 5" é tributada sobre R$ 100. O desconto <strong>condicional</strong> integra a base, e o recebimento menor fica só no financeiro. O desconto <strong>incondicional</strong>, concedido na própria nota, reduz a base.</p>
+<h3>Reembolsos</h3>
+<p>Para o reembolso não ser tributado, o documento fiscal precisa estar em nome de quem arca com a despesa. Se uma colaboradora compra o café da reunião e pede reembolso, a nota da padaria deve sair no <strong>CNPJ da Rede Américas</strong>, que então toma o crédito. Com reembolso de funcionários e de terceiros (o estacionamento de um consultor, por exemplo), cumprir essa exigência é difícil, e o regulamento ainda não trouxe solução. Por isso é preciso medir o montante de reembolsos para avaliar o impacto e a estratégia.</p>
+<div class="callout sand"><span class="tag">Receitas fora da saúde</span><p>Estacionamento, lojas e outras receitas que não estão na lista de saúde pagam a alíquota cheia, estimada em 27,91%. A locação tem redução própria, tratada na trilha de Gestão Imobiliária.</p></div>
+<h3>Nota financeira × nota da Reforma</h3>
+<p>Mesmo nome, naturezas diferentes:</p>
+<div class="tbl"><table><thead><tr><th></th><th>Nota de débito/crédito financeira</th><th>Nota de débito/crédito da Reforma</th></tr></thead><tbody>
+<tr><td>Natureza</td><td>Aviso emitido no ERP</td><td>Documento fiscal eletrônico (NFS-e com finalidade 1 ou 2, ou NF-e)</td></tr>
+<tr><td>Para que serve</td><td>Cobrar valores sem documento fiscal</td><td>Ajustar o IBS/CBS de uma operação já documentada</td></tr>
+<tr><td>Vínculo</td><td>Contrato ou fatura</td><td>Chave de acesso da nota original, com motivo codificado</td></tr>
+<tr><td>Validação</td><td>Nenhuma</td><td>Autorizada pela SEFAZ ou pelo Ambiente Nacional da NFS-e</td></tr>
+<tr><td>Apuração</td><td>Não entra</td><td>Muda o débito do emitente e o crédito do adquirente</td></tr>
+</tbody></table></div>
+<p>A classificação resultante do levantamento: <strong>desconto condicional</strong> continua em nota financeira; <strong>multas e juros</strong> passam a nota de débito fiscal; <strong>reembolso</strong> e <strong>intercompany</strong> passam a nota fiscal. A nota financeira fica só para o que está fora do IBS/CBS.</p>`,
+  qs:[
+{q:"Por que IBS e CBS alcançam operações que hoje não pagam ICMS nem ISS?", o:["Porque incidem sobre operações onerosas, seja mercadoria ou serviço","Porque todas as receitas passam a ser tratadas como prestação de serviço","Porque os municípios ampliaram a lista de serviços tributados pelo ISS","Porque passam a incidir sobre o faturamento total, como o PIS/Cofins"], w:"A hipótese de incidência é a operação onerosa (art. 4º da LC 214). Por isso juros, multas, reembolsos e intercompany entram na análise."},
+{q:"Sobre qual destas receitas IBS e CBS NÃO incidem?", o:["Rendimentos de aplicações financeiras da Rede","Juros e multa por atraso cobrados de uma operadora","Serviços prestados a outra empresa do grupo","Receita de estacionamento"], w:"Rendimentos financeiros estão fora da incidência, salvo no regime específico de serviços financeiros. Juros e multa ligados ao fornecimento, intercompany e estacionamento são operações onerosas."},
+{q:"Qual é a primeira atividade pedida a Finanças na implementação da reforma?", o:["Listar todas as operações onerosas do contas a pagar e a receber","Cancelar as notas de débito financeiras emitidas ao longo de 2026","Suspender a cobrança de juros e multa até a regulamentação final","Converter todos os contratos com operadoras para preço bruto"], w:"Ser onerosa não significa ter tributo, mas cada operação precisa ser analisada. O levantamento é a base para decidir qual documento cada cobrança vai exigir."},
+{q:"A Rede cobra juros e multa de uma operadora que pagou com atraso. Como fica a partir da reforma?", o:["Os valores integram a base de IBS/CBS e são cobrados por nota de débito fiscal","Continuam como receita financeira, sem tributo e sem documento fiscal","Pagam só ISS, como serviço","Ficam fora da base, porque juros são rendimento financeiro"], w:"Juros e multa ligados ao fornecimento integram a base. A cobrança sai da nota financeira e passa à NFS-e de débito (tipo 04, multa e juros)."},
+{q:"Uma NFS-e de R$ 100 prevê desconto de R$ 5 se o pagamento ocorrer até o dia 10. A operadora paga no prazo. Sobre qual valor incide o IBS/CBS?", o:["R$ 100: o desconto condicional integra a base","R$ 95: qualquer desconto concedido reduz a base","R$ 95, desde que se emita uma NFS-e de crédito","Sobre nenhum valor, até a data do pagamento"], w:"O desconto condicional integra a base, e o recebimento menor fica só no financeiro. Apenas o desconto incondicional, concedido na própria nota, reduz o valor tributado."},
+{q:"Uma colaboradora compra o café da reunião e pede reembolso. O que evita a tributação do reembolso?", o:["A nota da compra estar no CNPJ da Rede Américas","O recibo da compra estar no CPF da colaboradora","O valor ficar abaixo do limite mensal de reembolso","O reembolso ser pago junto com a folha do mês"], w:"O reembolso fica fora da base quando é por conta e ordem de terceiro, com o documento em nome de quem arca com a despesa. A Rede, nesse caso, toma o crédito da compra."},
+{q:"Como ficam os serviços prestados entre empresas da Rede (intercompany)?", o:["Têm débito no fornecedor e crédito no adquirente, a valor de mercado","Continuam sem nenhum efeito de IBS/CBS","Geram débito sem direito a crédito, como hoje","São tratados como transferência entre estabelecimentos do mesmo contribuinte"], w:"Empresas do grupo são contribuintes distintos. A operação gera débito para quem presta e crédito para quem toma. A transferência sem incidência vale só entre estabelecimentos do mesmo contribuinte."},
+{q:"Qual alíquota se aplica à receita de estacionamento de um hospital?", o:["Alíquota cheia, estimada em 27,91%","11,16%, a mesma dos serviços hospitalares","Nenhuma, por ser uma receita acessória","3,65%, como no PIS/Cofins cumulativo"], w:"A redução de 60% vale para os serviços da lista de saúde. Estacionamento, lojas e outras receitas fora dela pagam a alíquota cheia."},
+{q:"O que diferencia a nota de débito da Reforma da nota de débito financeira usada hoje?", o:["É documento fiscal vinculado à nota original e entra na apuração","É emitida no ERP, sem validação, e não entra na apuração","Serve para cobrar qualquer valor sem documento fiscal","Substitui a nota fiscal principal da operação ajustada"], w:"A nota da Reforma é autorizada pela SEFAZ ou pelo Ambiente Nacional da NFS-e, referencia a chave da nota original e altera o débito do emitente e o crédito do adquirente. A nota financeira continua só para o que fica fora do IBS/CBS."},
+{q:"Após o levantamento das operações onerosas, como fica o desconto condicional concedido a uma operadora?", o:["Continua em nota de crédito financeira","Passa a nota de crédito fiscal, que reduz o IBS/CBS","Exige substituir a NFS-e por outra de valor menor","Passa a nota de débito fiscal, emitida pela Rede"], w:"Como o desconto condicional integra a base, não há ajuste de tributo: o recebimento menor é registrado só no financeiro. Já multas e juros passam a nota de débito fiscal, e reembolsos e intercompany, a nota fiscal."}
+]},
+
+{ title:"Apuração assistida e notas de ajuste", short:"Débito, crédito, glosa e cancelamento", mins:11,
+  lesson:`
+<p class="lead">A apuração assistida funciona como a declaração de imposto de renda pré-preenchida. O Comitê Gestor (IBS) e a Receita Federal (CBS) montam o saldo do mês a partir dos documentos fiscais e dos pagamentos, e a empresa revisa. Some a obrigação de preencher declarações; surge a de conferir e conciliar.</p>
+<h3>Como funciona (LC 214/2025, arts. 44 a 47)</h3>
+<ul>
+<li>Consolida as operações de <strong>todos os estabelecimentos</strong> do contribuinte. O pagamento e o pedido de ressarcimento são centralizados em um único estabelecimento.</li>
+<li>Entram as notas emitidas (débitos), as notas recebidas com débito já extinto (créditos), as notas de débito e de crédito, o split payment, o RAD e os recolhimentos. <strong>O que não está em documento fiscal não entra.</strong></li>
+<li>O período de apuração é mensal.</li>
+</ul>
+<h3>Linha do tempo</h3>
+<ol class="tl">
+<li><time>Mês corrente</time><p>Processamento contínuo: documentos ordenados e compensações em lotes (a cada 4 horas no piloto).</p></li>
+<li><time>Dias 1 a 15</time><p>Do mês seguinte: consolidação, recepção de documentos residuais e primeira prévia.</p></li>
+<li><time>Até o vencimento</time><p>Revisão final e ajustes legais, sempre por documento fiscal.</p></li>
+<li><time>Vencimento</time><p>Pagamento por guia única, centralizada no estabelecimento matriz. No treinamento, o vencimento foi apresentado como o último dia do mês seguinte: o tributo de janeiro de 2027 vence no fim de fevereiro. Hoje, ISS vence por volta do dia 10 e PIS/Cofins no dia 20.</p></li>
+</ol>
+<h3>Efeitos jurídicos</h3>
+<div class="tbl"><table><thead><tr><th>Atitude da empresa</th><th>Efeito</th></tr></thead><tbody>
+<tr><td>Confirmar ou ajustar o saldo</td><td>Equivale a confissão de dívida</td></tr>
+<tr><td>Ficar em silêncio no prazo</td><td>Saldo presumido correto, com o crédito tributário constituído</td></tr>
+<tr><td>Depois disso</td><td>O Fisco ainda pode lançar diferenças</td></tr>
+</tbody></table></div>
+<div class="callout"><span class="tag">Papel de Finanças</span><p>Conciliar a apuração assistida com o ERP todo mês; corrigir divergências com documento fiscal, e não com planilha; cobrar fornecedores com crédito pendente; prever o caixa do saldo a pagar e do ressarcimento. O primeiro fechamento real será o de janeiro de 2027, com pagamento no fim de fevereiro.</p></div>
+<h3>Ajuste só por documento fiscal</h3>
+<p>A apuração não pode ser editada à mão. Ajuste positivo do saldo exige <strong>nota de débito</strong>; ajuste negativo, <strong>nota de crédito</strong>. A guia corrige o pagamento, não o saldo, e a nota financeira não ajusta nada. Débito e crédito são sempre do ponto de vista de quem emite.</p>
+<p>O sistema lê documento a documento. Se houve desconto em dez notas, cada uma é ajustada; não existe um ajuste global somando tudo.</p>
+<h3>NFS-e de débito e de crédito (NT 009)</h3>
+<p>O campo <code>finNFSe</code> indica a finalidade: <strong>0</strong> nota regular, <strong>1</strong> nota de crédito, <strong>2</strong> nota de débito.</p>
+<div class="tbl"><table><thead><tr><th>Tipo</th><th>Uso</th></tr></thead><tbody>
+<tr><td>Débito 01 e 02</td><td>Transferência de crédito para cooperativas; anulação de crédito por saídas imunes ou isentas (não se aplicam à Rede)</td></tr>
+<tr><td>Débito 03</td><td>Débitos de notas não processadas na apuração, um ajuste mais próximo do Fiscal</td></tr>
+<tr><td>Débito 04</td><td><strong>Multa e juros</strong> por atraso cobrados de um tomador</td></tr>
+<tr><td>Débito 05</td><td>Transferência de crédito na sucessão</td></tr>
+<tr><td>Débito 06</td><td><strong>Pagamento antecipado</strong></td></tr>
+<tr><td>Crédito 01 e 05</td><td>Só multa e juros, e transferência de crédito na sucessão</td></tr>
+</tbody></table></div>
+<p>Quem cobra multa e juros emite a nota de débito e o tomador se credita. Se a Rede paga multa e juros, deve exigir a nota do fornecedor.</p>
+<h3>Pagamentos antecipados</h3>
+<p>O tributo incide no fornecimento ou no pagamento, o que vier primeiro. Depósito de internação particular, pacote cirúrgico ou adiantamento de operadora geram débito no recebimento, pela alíquota da data, com <strong>NFS-e de débito tipo 06</strong>. É a única nota de ajuste que vem antes da nota principal: depois, a NFS-e do serviço sai pelo valor total, referencia a antecipação e a abate. Se o serviço não ocorrer e o valor for devolvido, o crédito correspondente é apropriado. Como compradora, a Rede pode ter crédito desde o adiantamento a fornecedor, se o débito dele for extinto.</p>
+<h3>Glosa (ajuste de base tipo 105)</h3>
+<p>A NFS-e não tem nota de crédito para glosa. O que existe é o campo de ajuste de base <code>tpAjusteBC</code> <strong>105</strong>, dentro de uma NFS-e regular, que aponta o documento que justifica a glosa.</p>
+<div class="tbl"><table><thead><tr><th>Situação</th><th>Tratamento</th></tr></thead><tbody>
+<tr><td>Glosa conhecida antes da emissão</td><td>Previsto no leiaute: NFS-e com o tipo 105 abatendo o valor glosado. Emitir após a análise de conta da operadora reduz glosas posteriores.</td></tr>
+<tr><td>Glosa após a emissão</td><td><strong>Caminho mais seguro hoje:</strong> substituir a NFS-e no prazo do município.</td></tr>
+<tr><td>Glosa após a emissão (alternativa)</td><td>Interpretação sem regra expressa: abater na próxima NFS-e para a mesma operadora, com o tipo 105 e a chave da nota glosada.</td></tr>
+</tbody></table></div>
+<p>Do lado da operadora, nada muda no crédito: ela não se credita do IBS/CBS do hospital. Deduz da base o que efetivamente paga, e o valor glosado, não pago, não é deduzido.</p>
+<h3>Redução de valor e cancelamento</h3>
+<ul>
+<li><strong>Erro de valor ou desconto já combinado:</strong> substituição da NFS-e no prazo do município.</li>
+<li><strong>Cancelamento:</strong> só se a operação não ocorreu. Em serviços, o fato gerador é o fornecimento: cancelar a nota de um atendimento já prestado tende a ser cancelamento após o fato gerador.</li>
+</ul>
+<div class="callout sand"><span class="tag">Penalidades (LC 214, art. 341-G)</span><p>Cancelar após o fato gerador: 66% do tributo de referência. Cancelar após o prazo: 33%. Crédito sem o estorno exigido: 66% do crédito. Reincidência: mais 50%. Em 2026, o tributo de referência é de 6% (CBS) mais 12% (IBS) sobre o valor da operação. Uma NFS-e de R$ 100 mil cancelada após o atendimento gera multa de R$ 11.880 (66% de R$ 18 mil). Em 2026, a autuação abre 60 dias para regularizar, o que extingue a multa.</p></div>
+<p class="hint">As regras de negócio das notas de ajuste ainda estão em evolução; os cenários de glosa após a emissão são interpretações, sujeitas a regulamentação.</p>`,
+  qs:[
+{q:"O que é a apuração assistida?", o:["O Fisco pré-apura o saldo do mês e a empresa revisa e confirma","Uma declaração mensal que a empresa preenche e envia ao Fisco","Um parcelamento automático do saldo devedor do contribuinte","Uma auditoria anual da Receita Federal sobre os créditos"], w:"O Comitê Gestor (IBS) e a Receita (CBS) pré-apuram débitos, créditos e saldo. O desafio da empresa passa a ser garantir que o número apresentado está correto."},
+{q:"O que acontece se a empresa não se manifestar sobre a apuração assistida dentro do prazo?", o:["O saldo é presumido correto e o crédito tributário se constitui","A apuração é cancelada e refeita no mês seguinte","O Fisco aplica multa automática de 66%","O saldo fica suspenso até a manifestação"], w:"O silêncio equivale a aceitar o saldo. Confirmar ou ajustar, por sua vez, equivale a confissão de dívida."},
+{q:"A Rede encontra uma divergência no saldo da apuração assistida. Como corrigir?", o:["Emitindo nota de débito ou de crédito fiscal","Editando o valor direto no portal da apuração","Pagando a diferença por guia avulsa, sem nota","Enviando a planilha de conciliação ao Fisco"], w:"O que não está em documento fiscal não entra na apuração. A guia corrige o pagamento, não o saldo."},
+{q:"Na NFS-e, o que indica o campo finNFSe = 2?", o:["NFS-e de débito","NFS-e regular","NFS-e de crédito","NFS-e substituta"], w:"finNFSe 0 é a nota regular, 1 é a de crédito e 2 é a de débito."},
+{q:"Quais tipos de NFS-e de crédito estão previstos na NT 009?", o:["Só multa e juros (01) e sucessão (05)","Glosa, devolução e desconto comercial","Qualquer redução de valor combinada","Os mesmos seis tipos da nota de débito"], w:"A nota de crédito da NFS-e não serve para abatimento comercial nem para glosa. A glosa usa o ajuste de base tipo 105."},
+{q:"Um paciente particular deposita o valor da internação antes do atendimento. Como fica o IBS/CBS?", o:["Incide no recebimento, com NFS-e de débito tipo 06","Só incide quando a NFS-e do serviço for emitida","Não incide, porque o depósito é valor financeiro","Incide em dobro: no depósito e de novo no serviço"], w:"O tributo incide no fornecimento ou no pagamento, o que vier primeiro. A nota de antecipação é a única de ajuste que vem antes da nota principal, que depois abate o valor antecipado."},
+{q:"A glosa da operadora já é conhecida antes da emissão da NFS-e. Como emitir?", o:["NFS-e regular com ajuste de base tipo 105","NFS-e cheia e, depois, uma NFS-e de crédito","NFS-e cheia, tratando a glosa só no financeiro","Duas NFS-e: uma aceita e outra para o glosado"], w:"O tpAjusteBC 105 é uma dedução de base dentro da nota regular, que abate o valor glosado e referencia o documento da glosa. Não é uma nota de ajuste separada."},
+{q:"A glosa só aparece depois da emissão da NFS-e. Qual é o caminho apresentado como mais seguro hoje?", o:["Substituir a NFS-e no prazo do município","Emitir uma NFS-e de crédito pelo valor glosado","Cancelar a NFS-e, sem limite de prazo","Deduzir a glosa da receita bruta, como hoje"], w:"A nota de crédito não cobre glosa. Abater na próxima nota da mesma operadora é uma interpretação sem regra expressa."},
+{q:"Em 2026, uma NFS-e de R$ 100 mil é cancelada depois de o atendimento ter sido prestado. Qual é a multa prevista?", o:["R$ 11.880 (66% de R$ 18 mil)","R$ 5.940 (33% de R$ 18 mil)","R$ 66.000 (66% do valor da nota)","Nenhuma, por ser ano de teste"], w:"O tributo de referência em 2026 é de 18% (6% de CBS e 12% de IBS). Cancelar após o fato gerador custa 66% dele. A autuação de 2026 ainda abre 60 dias para regularizar."},
+{q:"A glosa afeta o crédito da operadora?", o:["Não: a operadora deduz o que paga, e o glosado não é pago","Sim: a operadora perde o crédito integral da NFS-e","Sim: a operadora passa a dever o tributo do glosado","Não, porque as operadoras são isentas de IBS/CBS"], w:"A operadora não se credita do IBS/CBS do hospital. No regime específico, a base é a contraprestação recebida menos o que é efetivamente pago a prestadores."}
+]},
+
+{ title:"Créditos, split payment e RAD", short:"Quando o crédito existe e como garanti-lo", mins:11,
+  lesson:`
+<p class="lead">O crédito é a chave central da reforma. A regra é o crédito amplo, mas ele é <strong>financeiro</strong>: o caixa da Rede sai antes, e o crédito só existe depois que o tributo do fornecedor é pago (LC 214/2025, art. 47).</p>
+<h3>Quando o crédito é apropriável</h3>
+<ol>
+<li>O adquirente está no <strong>regime regular</strong>.</li>
+<li>A operação está em <strong>documento fiscal eletrônico idôneo</strong>, vinculado à atividade.</li>
+<li>O <strong>débito do fornecedor foi extinto</strong>: pago por ele, retido no split payment ou recolhido pela Rede via RAD.</li>
+<li>Não é <strong>uso e consumo pessoal</strong> nem outra hipótese de vedação.</li>
+</ol>
+<h3>Regras e restrições</h3>
+<div class="tbl"><table><thead><tr><th>Situação</th><th>Crédito</th></tr></thead><tbody>
+<tr><td>Bens e serviços ligados à atividade, inclusive indiretos</td><td>Sim, pelo IBS/CBS destacado</td></tr>
+<tr><td>Uso e consumo pessoal de sócios, administradores e empregados</td><td>Vedado (art. 57), com exceções como uniformes e EPI</td></tr>
+<tr><td>Ativo imobilizado</td><td>Integral na aquisição, e não pela depreciação; ressarcimento em até 60 dias</td></tr>
+<tr><td>Fornecedor do Simples Nacional</td><td>Limitado ao IBS/CBS pago no DAS; integral se o fornecedor optar pelo regime regular</td></tr>
+<tr><td>Alíquota zero, isenção, pessoa física não contribuinte</td><td>Não há crédito</td></tr>
+<tr><td>Prova e prazo</td><td>Documento idôneo; apropriação em até 5 anos</td></tr>
+</tbody></table></div>
+<div class="callout"><span class="tag">Exemplo do panetone</span><p>Panetone servido na mesa de um treinamento é despesa da atividade e gera crédito. Panetone entregue a cada funcionário no fim do ano é uso e consumo pessoal e não gera. A apuração assistida só reconhece sozinha as vedações listadas na lei; nas demais, Compras precisa avisar o Fiscal para ajustar.</p></div>
+<h3>O ciclo financeiro do crédito</h3>
+<ol class="tl">
+<li><time>1. Nota</time><p>O fornecedor destaca o IBS/CBS na NF-e ou NFS-e. O débito dele nasce no fornecimento.</p></li>
+<li><time>2. Pagamento</time><p>A Rede paga valor mais tributo ao fornecedor, ou o valor ao fornecedor e o tributo por RAD.</p></li>
+<li><time>3. Extinção</time><p>O débito é extinto pelo recolhimento do fornecedor, pelo split ou pelo RAD.</p></li>
+<li><time>4. Crédito</time><p>O valor destacado e extinto vira crédito apropriado da Rede.</p></li>
+<li><time>5. Uso</time><p>Compensa os débitos da Rede ou vira pedido de ressarcimento.</p></li>
+</ol>
+<p>Se o fornecedor não pagar, não há crédito, e a compra volta a carregar o tributo como custo. Isso muda a relação com fornecedores: a apuração assistida mostra quem não está pagando, e a certidão negativa de débitos (CND) passa a fazer parte do fluxo de compras de forma contínua. Parcelamentos de tributo pelo fornecedor ainda não têm tratamento claro para o crédito do cliente.</p>
+<h3>Split payment</h3>
+<p>Na liquidação financeira, o banco (PSP) separa o IBS/CBS e envia ao Fisco; o vendedor recebe o líquido. Para quem compra, é a <strong>garantia do crédito</strong>. Para quem vende, acaba a possibilidade de usar o caixa do tributo até o vencimento.</p>
+<div class="tbl"><table><thead><tr><th>Modalidade</th><th>Como funciona</th></tr></thead><tbody>
+<tr><td>Automático (inteligente), B2B</td><td>Cálculo em tempo real, consultando a apuração: o valor retido pode variar conforme os créditos disponíveis naquele momento</td></tr>
+<tr><td>Simplificado, B2C e varejo</td><td>Alíquota média setorial com ajustes periódicos</td></tr>
+<tr><td>Manual</td><td>Pagamentos fora do sistema financeiro, como dinheiro, com liberação dos créditos em até 3 dias</td></tr>
+</tbody></table></div>
+<p>No modelo inteligente, uma nota de R$ 100 com R$ 10 de tributo pode entrar como R$ 90, R$ 96 ou R$ 98, o que complica a baixa no contas a receber. Em pagamentos parcelados, o split retém a parte proporcional de cada parcela.</p>
+<h3>Quando há split</h3>
+<p>O split só se aplica quando o pagamento ocorre <strong>antes</strong> da data em que o tributo seria recolhido na apuração assistida.</p>
+<div class="tbl"><table><thead><tr><th>Cenário</th><th>Datas</th><th>Resultado</th></tr></thead><tbody>
+<tr><td>Prazo curto</td><td>Nota em 01/07, pagamento em 15/07, vencimento da apuração em 30/08</td><td>Tributo via split</td></tr>
+<tr><td>Prazo longo</td><td>Nota em 01/07, vencimento em 30/08, pagamento em 01/09</td><td>Sem split: tributo via apuração assistida</td></tr>
+<tr><td>Antecipado</td><td>Pagamento antes da emissão da nota</td><td>Tributo via split no pagamento</td></tr>
+</tbody></table></div>
+<div class="callout sand"><span class="tag">Cronograma</span><p>O split não é obrigatório em 2027. A previsão da Receita Federal é 2028, de forma escalonada (primeiro B2B, depois B2C), porque o sistema bancário ainda não está pronto.</p></div>
+<h3>RAD: recolhimento pelo adquirente</h3>
+<p>Quando o pagamento não passa pelo split, a Rede pode recolher ela mesma o IBS/CBS da nota (LC 214, art. 36) e garantir o próprio crédito.</p>
+<ul>
+<li>A Rede recolhe por guia vinculada à chave da nota (na CBS, um DARF RAD) e paga o <strong>líquido</strong> ao fornecedor.</li>
+<li>É opção do adquirente do regime regular, operação por operação. <strong>Não depende de autorização do fornecedor.</strong></li>
+<li>Quita só débitos ainda não extintos; o excedente volta ao fornecedor em até 3 dias úteis.</li>
+<li>Com split, não há RAD.</li>
+<li>Operação: o ERP lê o XML, separa líquido e tributo e gera a guia; o contas a pagar passa a ter duas saídas por nota.</li>
+<li>APIs da Receita para a CBS: consulta de recolhimentos prevista para o início de novembro de 2026 e emissão do DARF RAD para o fim do mesmo mês. Para o IBS, ainda sem especificação.</li>
+</ul>
+<div class="callout"><span class="tag">Atenção ao contrato</span><p>A lei não exige anuência do fornecedor, mas o contrato cobra o valor cheio. Pagar só o líquido sem cláusula pode virar cobrança de multa e juros. Prever o RAD em contrato e avisar o fornecedor quando usar. E alinhar Fiscal e Financeiro, para o tributo não ser pago duas vezes.</p></div>`,
+  qs:[
+{q:"Quando o crédito de IBS/CBS de uma compra se torna apropriável pela Rede?", o:["Quando o débito do fornecedor é extinto","Quando a nota fiscal é escriturada no ERP","Quando a Rede paga o valor cheio ao fornecedor","Só no fim do exercício, após auditoria"], w:"Com documento fiscal idôneo, o crédito depende da extinção do débito do fornecedor: pelo recolhimento dele, pelo split ou pelo RAD (art. 47). Pagar o fornecedor não basta se ele não recolher."},
+{q:"No fim do ano, a Rede compra panetones para entregar a cada funcionário. Há crédito?", o:["Não: é uso e consumo pessoal, com crédito vedado","Sim: toda compra da pessoa jurídica gera crédito","Sim, mas só de 60%","Só se o fornecedor for do Simples Nacional"], w:"O que é entregue de forma não onerosa a funcionários é uso e consumo pessoal. Se o panetone fosse servido num treinamento, seria despesa da atividade, com crédito."},
+{q:"Qual é o crédito na compra de um fornecedor do Simples Nacional?", o:["Limitado ao IBS/CBS pago por ele no DAS","Integral, pela alíquota de referência","Nenhum, em qualquer situação","Sempre 60% da alíquota de referência"], w:"O crédito acompanha o tributo efetivamente pago na cadeia. Se o fornecedor optar pelo regime regular, o crédito é integral. Isso é relevante para grupos médicos e prestadores do Simples."},
+{q:"A Rede compra um medicamento com alíquota zero. Qual é o crédito?", o:["Nenhum: o que não tem tributo na operação não gera crédito","40% da alíquota de referência","Um crédito presumido fixo","O mesmo crédito de um medicamento com redução de 60%"], w:"Itens com alíquota zero, isentos ou adquiridos de pessoa física não contribuinte não geram crédito."},
+{q:"Como é o crédito na compra de um equipamento para o ativo imobilizado?", o:["Integral, na aquisição do bem","Mês a mês, pela depreciação","Vedado, por ser bem durável","Só na venda do equipamento"], w:"O crédito vem na compra do bem, e o saldo credor ligado a imobilizado tem ressarcimento em até 60 dias."},
+{q:"Como o split payment garante o crédito de quem compra?", o:["O banco retém o tributo no pagamento e o envia ao Fisco","O comprador fica dispensado de exigir documento fiscal","O fornecedor passa a recolher o tributo em dobro","O crédito é liberado antes da emissão da nota"], w:"Com a retenção na liquidação, o débito do fornecedor é extinto e há certeza de que o tributo foi pago. Por isso o crédito é liberado."},
+{q:"A nota é emitida em 01/07, o tributo vence na apuração assistida em 30/08 e o cliente paga em 01/09. Há split payment?", o:["Não: o tributo já foi recolhido via apuração","Sim: o banco retém o tributo de novo","Sim, mas só sobre metade do tributo","Não, porque o split só vale para antecipações"], w:"O split só se aplica quando o pagamento ocorre antes da data em que o tributo seria recolhido na apuração."},
+{q:"O que é o RAD?", o:["O adquirente recolher o tributo da nota do fornecedor","Um regime especial de apuração para hospitais","A devolução de crédito a fornecedores do Simples","A declaração anual dos créditos apropriados"], w:"O RAD garante o crédito quando não há split: a Rede recolhe o IBS/CBS por guia vinculada à chave da nota e paga só o líquido ao fornecedor."},
+{q:"A Rede quer usar o RAD com um fornecedor. O que é preciso considerar?", o:["Não exige anuência, mas convém prever em contrato","O fornecedor precisa autorizar cada operação","Só é permitido com fornecedores do Simples","O RAD substitui a nota fiscal do fornecedor"], w:"Pagar só o líquido sem cláusula pode gerar cobrança de multa e juros. Também é preciso alinhar Fiscal e Financeiro para não pagar o tributo duas vezes."},
+{q:"Qual é a situação do split payment em 2027?", o:["Não é obrigatório; a previsão da Receita Federal é 2028, de forma escalonada","É obrigatório para todas as operações desde 1º de janeiro","Foi extinto pelo regulamento","Vale só para hospitais"], w:"Sem split em 2027, o crédito depende do recolhimento do fornecedor ou do RAD, e todo o débito sai por guia no vencimento."}
+]},
+
+{ title:"A Rede Américas na reforma", short:"Diagnóstico, receita, orçamento e contabilização", mins:10,
+  lesson:`
+<p class="lead">Hoje <strong>98,5% da receita</strong> da Rede (jan–ago/2026, 26 empresas) está no PIS/Cofins cumulativo: alíquota menor, mas nenhum crédito sobre insumos. Na prática, a reforma é uma mudança de regime.</p>
+<h3>Estrutura tributária atual</h3>
+<div class="tbl"><table><thead><tr><th>Tributo</th><th>Como funciona hoje na Rede</th><th>Crédito?</th></tr></thead><tbody>
+<tr><td>PIS/Cofins cumulativo</td><td>3,65% sobre a receita de serviços hospitalares (Lei 10.833/2003, art. 10, XIII)</td><td>Não</td></tr>
+<tr><td>PIS/Cofins não cumulativo</td><td>9,25% sobre outras receitas; 4,65% sobre receitas financeiras</td><td>Sim, restrito</td></tr>
+<tr><td>ISS</td><td>2% a 5% do faturamento, conforme o município</td><td>Não</td></tr>
+<tr><td>ICMS</td><td>Só na CMS (venda de mercadorias), 12%</td><td>Sim</td></tr>
+</tbody></table></div>
+<p>São 22 empresas no lucro real e 4 no presumido. BIO e CMS têm toda a receita no não cumulativo e MTA, 38,9%; as demais estão entre 94% e 100% no cumulativo.</p>
+<div class="callout"><span class="tag">Por que importa</span><p>Hoje o PIS/Cofins e o ICMS embutidos em mat/med, OPME e serviços viram custo. Com IBS/CBS, esse tributo passa a ser crédito. É aí que a margem melhora.</p></div>
+<h3>Créditos potenciais</h3>
+<p>Estimativa ilustrativa com o balancete da Ímpar (jan–mai/2026), aplicando as alíquotas de 2033:</p>
+<div class="tbl"><table><thead><tr><th>Tipo de gasto</th><th class="n">Base (R$ mi)</th><th class="n">Alíquota</th><th class="n">Crédito (R$ mi)</th></tr></thead><tbody>
+<tr><td>Indiretos (terceiros, utilidades, TI)</td><td class="n">251,0</td><td class="n">27,91%</td><td class="n">70,1</td></tr>
+<tr><td>Serviços médicos e diagnósticos</td><td class="n">434,4</td><td class="n">11,16%</td><td class="n">48,5</td></tr>
+<tr><td>Medicamentos</td><td class="n">293,2</td><td class="n">11,16%</td><td class="n">32,7</td></tr>
+<tr><td>OPME</td><td class="n">107,7</td><td class="n">11,16%</td><td class="n">12,0</td></tr>
+<tr><td>Materiais médicos</td><td class="n">82,4</td><td class="n">11,16%</td><td class="n">9,2</td></tr>
+<tr><td>Alimentação e dietas</td><td class="n">52,7</td><td class="n">11,16%</td><td class="n">5,9</td></tr>
+<tr><td><strong>Total creditável</strong></td><td class="n"><strong>1.221,4</strong></td><td class="n"><strong>14,6%</strong></td><td class="n"><strong>178,4</strong></td></tr>
+</tbody></table></div>
+<p>Ficam fora da base creditável a <strong>folha de pagamento</strong> (R$ 321,1 mi), as <strong>despesas financeiras</strong> (R$ 374,4 mi, juros de empréstimos têm regime próprio) e a <strong>depreciação</strong> (R$ 76,2 mi, porque o crédito vem na compra do bem). Itens com alíquota zero, fornecedores do Simples e pessoas físicas reduzem o crédito real. A área tributária ainda vai enviar a base oficial.</p>
+<h3>Efeito na receita hospitalar</h3>
+<p>Para manter a mesma receita líquida de R$ 100, quanto faturar à operadora (ISS ilustrativo de 3%):</p>
+<div class="tbl"><table><thead><tr><th></th><th class="n">Hoje</th><th class="n">2027–28</th><th class="n">2029</th><th class="n">2032</th><th class="n">2033</th></tr></thead><tbody>
+<tr><td>PIS/Cofins (por dentro)</td><td class="n">3,91</td><td class="n">—</td><td class="n">—</td><td class="n">—</td><td class="n">—</td></tr>
+<tr><td>ISS (por dentro)</td><td class="n">3,21</td><td class="n">3,09</td><td class="n">2,77</td><td class="n">1,83</td><td class="n">—</td></tr>
+<tr><td>IBS/CBS saúde (por fora)</td><td class="n">—</td><td class="n">3,68</td><td class="n">4,43</td><td class="n">6,68</td><td class="n">11,16</td></tr>
+<tr><td><strong>Faturado à operadora</strong></td><td class="n"><strong>107,12</strong></td><td class="n"><strong>106,77</strong></td><td class="n"><strong>107,20</strong></td><td class="n"><strong>108,51</strong></td><td class="n"><strong>111,16</strong></td></tr>
+<tr><td>Carga sobre o faturado</td><td class="n">6,65%</td><td class="n">6,34%</td><td class="n">6,72%</td><td class="n">7,85%</td><td class="n">10,04%</td></tr>
+</tbody></table></div>
+<p>O faturado fica estável até 2029 e sobe 3,8% em 2033. Em 2027–2028 há até um pequeno ganho: a CBS de saúde (3,68%) é próxima do PIS/Cofins atual, mas vai por fora, sem gross-up, e ainda gera crédito.</p>
+<h3>Alíquota efetiva de saúde, ano a ano</h3>
+${rateChart()}
+<p>ISS e ICMS continuam até 2032, caindo ano a ano, e o ISS não gera crédito. Os benefícios de ISS desaparecem com ele.</p>
+<div class="callout sand"><span class="tag">Contratos com operadoras</span><p>Com cláusula de tributo por fora e repasse automático da alíquota, a receita líquida é preservada. Sem ela, a Rede absorve a alta do IBS/CBS até 2033.</p></div>
+<h3>Orçamento 2027 e modelagem até 2033</h3>
+<ul>
+<li>Três linhas por contrato: <strong>preço líquido, CBS por fora e crédito</strong>.</li>
+<li>PIS/Cofins sai do orçamento; ISS e ICMS seguem, com a redução prevista a partir de 2029.</li>
+<li>Usar as estimativas oficiais de alíquota e simular a margem por cliente e por CNPJ.</li>
+</ul>
+<h3>Contabilização (ilustrativa)</h3>
+<p>Serviço de R$ 100 e compra de R$ 50, com IBS/CBS de saúde de 11,16% (2033):</p>
+<div class="tbl"><table><thead><tr><th>Evento</th><th>Lançamento</th><th>Caixa</th></tr></thead><tbody>
+<tr><td>Venda (NFS-e)</td><td>D Clientes 111,16 · C Receita de serviços 100,00 · C IBS/CBS a recolher 11,16</td><td>Nenhum: o tributo não passa pela receita</td></tr>
+<tr><td>Recebimento</td><td>D Banco 100,00 · D IBS/CBS a recolher 11,16 · C Clientes 111,16</td><td>Com split, entra o líquido; sem split, entra 111,16 e o tributo sai depois</td></tr>
+<tr><td>Compra de insumo (NF-e)</td><td>D Estoque 50,00 · D IBS/CBS a recuperar 5,58 · C Fornecedores 55,58</td><td>Nenhum; o crédito fica "a apropriar"</td></tr>
+<tr><td>Pagamento ao fornecedor</td><td>D Fornecedores 55,58 · C Banco 55,58</td><td>Sai o valor cheio; com split ou RAD, o crédito passa a "apropriado"</td></tr>
+<tr><td>Apuração do mês</td><td>D IBS/CBS a recolher · C IBS/CBS a recuperar</td><td>Encontro de contas; o saldo devedor sai por guia</td></tr>
+</tbody></table></div>
+<p>Como o crédito só pode ser usado depois que o fornecedor paga, a orientação é separar o crédito <strong>a apropriar</strong> do <strong>apropriado</strong> e reclassificar quando a apuração assistida liberar. Enquanto não houver API integrada ao ERP, isso depende de comunicação entre Fiscal e Contabilidade. A Orientação Técnica nº 1 do CFC não proíbe usar uma única conta: é escolha do contador. Lançamentos a validar com a Contabilidade.</p>
+<p class="hint">Valores da Rede são estimativas ilustrativas, a confirmar com dados oficiais por CNPJ.</p>`,
+  qs:[
+{q:"Que parcela da receita da Rede está hoje no regime cumulativo de PIS/Cofins?", o:["Cerca de 98,5%","Cerca de 50%","Cerca de 14,6%","Nenhuma: toda a Rede está no não cumulativo"], w:"Pelo diagnóstico de jan–ago/2026, quase toda a receita está no cumulativo. Por isso a reforma representa, na prática, uma mudança de regime."},
+{q:"Como é tributada hoje a receita de serviços hospitalares da Rede no PIS/Cofins?", o:["3,65% no regime cumulativo, sem crédito sobre insumos","9,25% no regime não cumulativo, com crédito","4,65%, como receita financeira","Isenta de PIS/Cofins"], w:"Serviços hospitalares ficam no cumulativo mesmo no lucro real (Lei 10.833/2003, art. 10, XIII)."},
+{q:"Por que a reforma tende a melhorar a margem sobre mat/med e OPME?", o:["Porque o tributo dessas compras, hoje custo, vira crédito","Porque mat/med e OPME passam a ser isentos","Porque o preço dos fornecedores cai pela metade","Porque o hospital deixa de pagar ISS já em 2027"], w:"Hoje PIS/Cofins e ICMS embutidos nas compras viram custo. Com IBS/CBS, o tributo destacado e pago pelo fornecedor é recuperado."},
+{q:"Qual destes gastos fica fora da base creditável?", o:["Folha de pagamento","Medicamentos","OPME","Serviços de TI de terceiros"], w:"Folha não gera crédito. Despesas financeiras e depreciação também ficam fora: o crédito do bem vem na compra."},
+{q:"Na estimativa ilustrativa da Ímpar (jan–mai/2026), qual foi o crédito potencial?", o:["R$ 178,4 milhões em 5 meses, cerca de 14,6% da base creditável","R$ 1,2 bilhão por mês","R$ 70,1 milhões, só de indiretos, sem créditos de saúde","Nenhum, porque saúde tem redução de alíquota"], w:"A estimativa aplica 27,91% aos indiretos e 11,16% a saúde, medicamentos, dispositivos e alimentação. Alíquota zero, Simples e PF reduzem o crédito real."},
+{q:"Para manter R$ 100 de receita líquida, quanto a Rede precisaria faturar à operadora em 2033, pelo exercício do treinamento?", o:["R$ 111,16, cerca de 3,8% acima dos R$ 107,12 de hoje","R$ 127,91, com a alíquota cheia","R$ 107,12, o mesmo de hoje","R$ 100,00, porque o tributo vai por fora"], w:"Hoje, com PIS/Cofins e ISS por dentro, R$ 100 líquidos exigem R$ 107,12. Em 2033, com IBS/CBS de saúde de 11,16% por fora, R$ 111,16."},
+{q:"Qual é a alíquota efetiva estimada de IBS/CBS sobre serviços de saúde em 2027 e 2028?", o:["3,68%","11,16%","9,21%","0,9%"], w:"Em 2027–2028, CBS de 9,11% mais IBS de 0,1%, com redução de 60%, resultam em 3,68%. A alíquota sobe a partir de 2029, com o IBS."},
+{q:"Quais linhas o orçamento de 2027 deve ter por contrato?", o:["Preço líquido, CBS por fora e crédito","Preço bruto com PIS/Cofins embutido","Somente receita líquida, sem tributo","Preço bruto, ISS e IBS cheio"], w:"PIS/Cofins sai do orçamento. ISS e ICMS seguem, com redução a partir de 2029."},
+{q:"Qual é o lançamento ilustrativo de uma venda de serviço de R$ 100 com IBS/CBS de 11,16%?", o:["D Clientes 111,16 · C Receita 100,00 · C IBS/CBS a recolher 11,16","D Clientes 100,00 · C Receita 88,84 · C IBS/CBS a recolher 11,16","D Clientes 111,16 · C Receita 111,16, sem conta de tributo","D Banco 100,00 · C Receita 88,84 · C IBS/CBS a recuperar 11,16"], w:"O tributo por fora transita pelo balanço, mas não pela receita."},
+{q:"Por que se recomenda separar o crédito \"a apropriar\" do crédito \"apropriado\"?", o:["Porque o crédito só fica disponível quando o fornecedor paga","Porque a lei exige duas contas para cada fornecedor","Porque créditos de saúde e indiretos não podem se misturar","Porque o crédito apropriado é lançado na receita"], w:"A nota recebida gera um crédito potencial. Só com o pagamento do tributo pelo fornecedor, split ou RAD ele fica disponível. A Orientação Técnica nº 1 do CFC não proíbe usar uma conta só."}
+]},
+
+{ title:"Caixa, capital de giro e rotinas", short:"Ressarcimento, retenções, indicadores e próximos passos", mins:11,
+  lesson:`
+<p class="lead">O débito de IBS/CBS nasce no mês do atendimento, mas o caixa da operadora entra depois. O contrato com a operadora passa a ser a principal ferramenta de caixa da reforma.</p>
+<h3>Quando o IBS/CBS sai do caixa</h3>
+<ol class="tl">
+<li><time>Dia 0</time><p>Atendimento e NFS-e: o fato gerador, e o débito, são do mês do fornecimento.</p></li>
+<li><time>Dia 30</time><p>Apuração assistida: o saldo do mês é confirmado.</p></li>
+<li><time>Vencimento</time><p>Recolhimento do saldo, no prazo do regulamento.</p></li>
+<li><time>Dias 60–120</time><p>A operadora paga, conforme o prazo médio de recebimento (PMR) real.</p></li>
+</ol>
+<p>Se a operadora paga depois do vencimento, a Rede recolhe com caixa próprio, ou com os créditos do mês, e não há split nessa operação. Isso já acontece hoje com o PIS/Cofins, mas a carga vai ser maior.</p>
+<h3>Onde o caixa fica descoberto</h3>
+<div class="tbl"><table><thead><tr><th>Risco</th><th>Por quê</th></tr></thead><tbody>
+<tr><td>Recebimento depois do vencimento</td><td>A Rede já recolheu com caixa próprio</td></tr>
+<tr><td>Compra paga com split</td><td>A Rede paga o valor cheio de uma vez; o crédito só reduz a apuração do período</td></tr>
+<tr><td>Saldo da apuração</td><td>Os créditos do mês podem não cobrir os débitos de vendas ainda não recebidas</td></tr>
+</tbody></table></div>
+<p><strong>Como se proteger:</strong> colocar o vencimento da guia no fluxo de caixa diário; negociar PMR ou antecipar recebíveis; receber por meios de pagamento com split; capturar todos os créditos, cobrando o fornecedor ou usando RAD; pedir ressarcimento rápido; usar os créditos do próprio mês.</p>
+<div class="callout"><span class="tag">Fevereiro de 2027</span><p>No primeiro vencimento da CBS, as compras de janeiro ainda não geram crédito disponível: o débito dos fornecedores vence no mesmo dia que o da Rede. A tendência é um desembolso maior em fevereiro e equilíbrio a partir de março, desde que os fornecedores paguem. Se só metade pagar, só metade do crédito aparece.</p></div>
+<h3>Capital de giro: exercício PMP × PMR</h3>
+<p>Premissas: R$ 100 mi por mês de receita líquida com operadoras, compras creditáveis de R$ 45 mi, PMR de 90 dias, PMP de 45 dias e recolhimento em cerca de 30 dias (60 dias financiados).</p>
+<div class="tbl"><table><thead><tr><th>Capital de giro ligado a tributos (R$ mi)</th><th class="n">Hoje</th><th class="n">2033</th></tr></thead><tbody>
+<tr><td>Tributo do mês</td><td class="n">7,12</td><td class="n">11,16</td></tr>
+<tr><td>(A) Débito financiado: tributo × 60/30</td><td class="n">14,24</td><td class="n">22,32</td></tr>
+<tr><td>(B) Crédito pago ao fornecedor antes de compensar</td><td class="n">—</td><td class="n">6,30</td></tr>
+<tr><td><strong>(C) Capital de giro tributário = A + B</strong></td><td class="n"><strong>14,24</strong></td><td class="n"><strong>28,62</strong></td></tr>
+</tbody></table></div>
+<p>Resultado: <strong>mais R$ 14,4 mi</strong> de capital de giro para cada R$ 100 mi mensais de receita líquida com PMR de 90 dias. Com PMR de 60 dias, mais R$ 10,3 mi; com 120 dias, mais R$ 18,4 mi. Exercício ilustrativo, a refazer com dados reais por operadora e CNPJ.</p>
+<h3>Ressarcimento e saldos</h3>
+<ul>
+<li>IBS e CBS são apurados separadamente, por CNPJ. O saldo credor compensa os meses seguintes ou vira pedido de ressarcimento.</li>
+<li>Prazos: <strong>30 dias</strong> no programa de conformidade; <strong>60 dias</strong> para créditos de imobilizado ou pedido de até 150% da média mensal; <strong>180 dias</strong> nos demais casos. Sem análise no prazo, ressarcimento em 15 dias, com correção pela Selic.</li>
+<li>O saldo <strong>não se transfere entre empresas do grupo</strong>, salvo em sucessão.</li>
+</ul>
+<div class="tbl"><table><thead><tr><th>Crédito de transição</th><th>Regra</th></tr></thead><tbody>
+<tr><td>Crédito presumido sobre estoque (art. 381)</td><td>Para quem estava no cumulativo em 31/12/2026: CBS de 9,25% sobre bens novos em estoque em 01/01/2027, para revenda ou para prestar serviços (pode alcançar mat/med e OPME). Apurado até 30/06/2027, usado em 12 parcelas só contra a CBS.</td></tr>
+<tr><td>Saldos de PIS/Cofins (arts. 378 a 380)</td><td>Créditos escriturados na EFD-Contribuições e não usados até 31/12/2026: compensação com CBS ou outros tributos federais, ou ressarcimento, via PER/DCOMP Web.</td></tr>
+<tr><td>Saldos de ICMS</td><td>Saldo em 31/12/2032, homologado pelo estado: compensação com IBS em 240 parcelas. Relevante só para operações com ICMS.</td></tr>
+</tbody></table></div>
+<p><strong>Até dezembro de 2026:</strong> inventariar o estoque de mat/med e OPME por CNPJ, com os documentos de aquisição, e levantar os saldos de PIS/Cofins. O enquadramento do crédito sobre estoque deve ser validado com o Tributário.</p>
+<h3>Retenções</h3>
+<p>Em 2026, a Rede teve R$ 161,9 mi retidos.</p>
+<ul>
+<li><strong>PIS/Cofins retidos:</strong> acabam em 2027, com a extinção do PIS/Cofins. O fato gerador da retenção é o pagamento, então pagamentos de 2027 sobre notas de 2026 precisam ser mapeados.</li>
+<li><strong>ISS retido:</strong> cai com o ISS de 2029 a 2032 e acaba em 2033.</li>
+<li><strong>IRRF, CSLL e INSS:</strong> continuam. Não fazem parte da reforma do consumo.</li>
+<li>O split payment substitui a lógica de retenção para IBS/CBS.</li>
+</ul>
+<h3>O que muda por área</h3>
+<div class="tbl"><table><thead><tr><th>Área</th><th>Rotina nova</th></tr></thead><tbody>
+<tr><td>Contas a pagar</td><td>Nota fiscal válida como condição de pagamento; conferir CST, cClassTrib e destaque; sem débito extinto, RAD ou cobrança ao fornecedor</td></tr>
+<tr><td>Contas a receber</td><td>Faturar preço mais IBS/CBS por fora; conciliar recebimentos líquidos pela chave da NFS-e; glosas e cancelamentos com documento de ajuste; aging com o tributo já devido</td></tr>
+<tr><td>Tesouraria</td><td>Projetar o saldo mensal e o vencimento da guia; antecipar caixa para faturas de prazo longo; gerir duas saídas por compra com RAD</td></tr>
+<tr><td>Contabilidade</td><td>IBS/CBS a recuperar como ativo, fora do custo; tributo por fora fora da receita</td></tr>
+<tr><td>Fiscal e apuração</td><td>Crédito só após a extinção do débito; revisar a apuração todo mês; ajustes por nota de débito ou de crédito</td></tr>
+<tr><td>FP&amp;A e orçamento</td><td>Orçar 2027 com preço líquido e CBS por fora; simular margem por cliente e CNPJ; reprojetar até 2033</td></tr>
+</tbody></table></div>
+<h3>Indicadores sugeridos (mensais, por CNPJ)</h3>
+<div class="tbl"><table><thead><tr><th>Indicador</th><th>Como medir</th><th>Referência</th></tr></thead><tbody>
+<tr><td>Carga efetiva líquida</td><td>(Débitos − créditos) ÷ receita líquida</td><td>Dentro do orçamento</td></tr>
+<tr><td>Aproveitamento de créditos</td><td>Créditos apropriados ÷ IBS/CBS destacado nas compras</td><td>≥ 98%</td></tr>
+<tr><td>Créditos não aproveitados</td><td>IBS/CBS de fornecedores ainda sem débito extinto</td><td>Aging &lt; 60 dias</td></tr>
+<tr><td>Tempo de ressarcimento</td><td>Dias entre pedido e recebimento</td><td>≤ 60 dias</td></tr>
+<tr><td>Saldo credor</td><td>Saldo acumulado e projeção de consumo</td><td>Sem saldo parado por mais de 6 meses</td></tr>
+<tr><td>Capital de giro tributário</td><td>Tributo devido sobre faturas não recebidas</td><td>Dentro do orçamento</td></tr>
+</tbody></table></div>
+<h3>O que vem pela frente</h3>
+<ol class="tl">
+<li><time>15/12/2026</time><p>Senado fixa a alíquota da CBS de 2027.</p></li>
+<li><time>31/12/2026</time><p>Fim do PIS/Cofins.</p></li>
+<li><time>01/01/2027</time><p>CBS em vigor, sem split payment.</p></li>
+<li><time>2028</time><p>Split payment obrigatório, pela previsão da Receita.</p></li>
+<li><time>2029</time><p>O IBS começa a subir: saúde a 4,43%.</p></li>
+<li><time>2033</time><p>Reforma plena: saúde a 11,16%.</p></li>
+</ol>
+<p><strong>Cadência proposta até o go-live:</strong> classificar as receitas por CNPJ e por serviço na lista de saúde (cClassTrib); revisar os contratos com operadoras e incluir a cláusula de tributo por fora; parametrizar ERP e faturamento com CBS por fora e notas de débito e crédito; a partir de dezembro, rodar o orçamento de 2027 e a conciliação da apuração em paralelo.</p>`,
+  qs:[
+{q:"A que mês pertence o débito de IBS/CBS de um atendimento a convênio?", o:["Ao mês do fornecimento","Ao mês em que a operadora paga","Ao mês em que a glosa é resolvida","Ao último mês do trimestre"], w:"O fato gerador é o fornecimento. Por isso o prazo de recebimento das operadoras pesa no capital de giro."},
+{q:"A operadora paga uma fatura depois do vencimento da apuração. O que acontece com o tributo?", o:["A Rede já recolheu com caixa próprio; não há split","O banco retém o tributo no pagamento atrasado","O tributo fica suspenso até o recebimento","A operadora recolhe o tributo em nome da Rede"], w:"O split só alcança pagamentos anteriores ao vencimento. Depois dele, o saldo já foi pago na apuração assistida, com caixa próprio ou com créditos do mês."},
+{q:"Por que o primeiro vencimento da CBS, em fevereiro de 2027, tende a pesar mais no caixa?", o:["Porque os créditos de janeiro ainda não estarão liberados","Porque a alíquota da CBS é dobrada em fevereiro","Porque o PIS/Cofins de janeiro vence junto, em dobro","Porque o split payment começa a valer em fevereiro"], w:"O débito dos fornecedores sobre as notas de janeiro vence no mesmo dia que o da Rede, então os créditos ainda não estão disponíveis. A partir de março, com esses pagamentos processados, débito e crédito tendem a se equilibrar."},
+{q:"No exercício de capital de giro, qual é o efeito em 2033 para cada R$ 100 mi mensais de receita líquida com PMR de 90 dias?", o:["Cerca de R$ 14,4 mi a mais de capital de giro","Cerca de R$ 1,4 mi a menos","Nenhum, porque o tributo vai por fora","Cerca de R$ 100 mi a mais"], w:"O capital de giro tributário passa de R$ 14,24 mi para R$ 28,62 mi. Com PMR de 60 dias, o acréscimo é de R$ 10,3 mi; com 120 dias, R$ 18,4 mi."},
+{q:"Em quanto tempo sai o ressarcimento de saldo credor para contribuinte em programa de conformidade?", o:["30 dias","60 dias","180 dias","5 anos"], w:"30 dias no programa de conformidade, 60 para imobilizado ou pedido de até 150% da média mensal e 180 nos demais casos."},
+{q:"Uma empresa da Rede acumula saldo credor de IBS/CBS. Ela pode transferir esse saldo a outra empresa do grupo?", o:["Não, salvo em caso de sucessão","Sim, livremente, por estar no mesmo grupo","Sim, mas só para a matriz","Sim, desde que as duas tenham o mesmo ISS"], w:"Débitos e créditos são apurados por CNPJ. O saldo compensa períodos seguintes ou vira pedido de ressarcimento."},
+{q:"O que prevê o crédito presumido sobre estoque para quem estava no PIS/Cofins cumulativo em 31/12/2026?", o:["Crédito de CBS de 9,25% sobre o estoque, em 12 parcelas","Devolução em dinheiro do PIS/Cofins pago em 2026","Crédito de IBS de 18,70% sobre todo o estoque","Isenção de CBS sobre o estoque até 2033"], w:"Vale para bens novos em estoque em 01/01/2027, para revenda ou para prestar serviços, o que pode alcançar mat/med e OPME. O crédito é apurado até 30/06/2027 e usado só contra a CBS. Por isso o inventário por CNPJ precisa estar pronto até dezembro."},
+{q:"Quais retenções continuam depois da reforma?", o:["IRRF, CSLL e INSS","PIS e Cofins retidos","ISS retido, sem mudança até 2040","Nenhuma, todas acabam em 2027"], w:"PIS/Cofins retidos acabam em 2027, e o ISS retido cai até acabar em 2033. IRRF, CSLL e INSS não fazem parte da reforma do consumo."},
+{q:"Como se mede o indicador de aproveitamento de créditos, e qual é a referência sugerida?", o:["Créditos apropriados ÷ IBS/CBS destacado nas compras, ≥ 98%","Débitos ÷ receita bruta do mês, com meta de 50%","Créditos ÷ folha de pagamento, sem meta definida","Ressarcimentos recebidos ÷ pedidos, meta de 10%"], w:"O indicador mostra quanto do tributo pago nas compras virou crédito de fato. Fornecedores sem débito extinto derrubam o número."},
+{q:"Segundo o treinamento, qual é a principal ferramenta de caixa da Rede na reforma?", o:["O contrato com a operadora","O parcelamento do IBS/CBS junto ao Fisco","A emissão de notas de débito financeiras","A retenção de PIS/Cofins dos fornecedores"], w:"Preço líquido mais tributo por fora, prazo de pagamento e meio de pagamento com split definem quem financia o IBS/CBS e quando o caixa sai. A tesouraria passa a planejar o tributo junto com o recebimento."}
+]}
+];
+
+/* ---------- estado ---------- */
+const blank = () => ({name:"", mods: MODULES.map(()=>({best:0, passed:false, attempts:0})), completedAt:null, code:null});
+function load(){ try{ const s = JSON.parse(localStorage.getItem(STORE)); if(s && Array.isArray(s.mods) && s.mods.length===MODULES.length) return s; }catch(e){} return null; }
+function save(){ try{ localStorage.setItem(STORE, JSON.stringify(state)); }catch(e){} }
+let state = load() || blank();
+let view = {screen:"home", mod:0};
+let quiz = null;
+
+const $ = s => document.querySelector(s);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const pctTxt = v => Math.round(v*100)+"%";
+const unlocked = i => i===0 || state.mods[i-1].passed;
+const allPassed = () => state.mods.every(m=>m.passed);
+const finalScore = () => state.mods.reduce((a,m)=>a+m.best,0)/MODULES.length;
+function shuffle(a){ a=a.slice(); for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]];} return a; }
+function toast(msg){ const t=$("#toast"); t.textContent=msg; t.classList.add("show"); clearTimeout(toast._t); toast._t=setTimeout(()=>t.classList.remove("show"),3200); }
+
+/* ---------- índice ---------- */
+function renderRail(){
+  const n = state.mods.filter(m=>m.passed).length;
+  $("#meterTxt").textContent = `${n} de ${MODULES.length}`;
+  $("#meterBar").style.width = (n/MODULES.length*100)+"%";
+  const items = MODULES.map((m,i)=>{
+    const st = state.mods[i], open = unlocked(i);
+    const cls = st.passed ? "done" : open ? "open" : "";
+    const sub = st.passed ? `<small class="ok">Aprovado · ${pctTxt(st.best)}</small>` : open ? `<small>${st.attempts? "Em andamento":"Disponível"}</small>` : `<small>Bloqueado</small>`;
+    const cur = (view.screen!=="home" && view.screen!=="cert" && view.mod===i);
+    return `<li class="${cls}"><button class="mod-btn" data-go="${i}" ${open?"":"disabled"} aria-current="${cur}">
+      <span class="num">${st.passed?"✓":i+1}</span><span class="mod-txt"><b>${esc(m.title)}</b>${sub}</span></button></li>`;
+  }).join("");
+  const done = allPassed();
+  const cert = `<li class="${done?"done":""}"><button class="mod-btn" data-cert ${done?"":"disabled"} aria-current="${view.screen==="cert"}">
+    <span class="num">★</span><span class="mod-txt"><b>Conclusão</b><small${done?' class="ok"':""}>${done?"Trilha concluída":"Após os 6 módulos"}</small></span></button></li>`;
+  $("#mods").innerHTML = items + cert;
+}
+
+/* ---------- telas ---------- */
+function nextModule(){ const i = state.mods.findIndex(m=>!m.passed); return i<0 ? null : i; }
+
+function renderHome(){
+  const nx = nextModule(), started = state.mods.some(m=>m.attempts>0);
+  const cta = nx===null ? `<button class="btn" data-cert>Ver minha conclusão</button>`
+    : `<button class="btn" data-go="${nx}">${started?"Continuar":"Começar"}: Módulo ${nx+1}</button>`;
+  return `<span class="eyebrow">Trilha de capacitação · Reforma Tributária</span>
+  <h1>${TRAIL}</h1>
+  <p class="lead">O que muda para contas a pagar, contas a receber, tesouraria, contabilidade e FP&amp;A da Rede Américas com a chegada da CBS e do IBS: como o crédito nasce, como funciona a apuração assistida, quais cobranças passam a exigir nota fiscal e o que acontece com o caixa.</p>
+  <div class="facts">
+    <div class="fact"><b>6</b><span>módulos em sequência</span></div>
+    <div class="fact"><b>60</b><span>questões, 10 por módulo</span></div>
+    <div class="fact"><b>70%</b><span>para aprovação (7 de 10)</span></div>
+    <div class="fact"><b>6/6</b><span>módulos para concluir a trilha</span></div>
+  </div>
+  <div class="read"><p>Cada módulo tem um texto de apoio e uma avaliação. O módulo seguinte só é liberado depois da aprovação no anterior. Se não atingir 70%, você vê quais questões errou, revisa o conteúdo e refaz a avaliação com as perguntas em nova ordem.</p></div>
+  <div class="field"><label for="nameHome">Seu nome completo</label>
+    <input id="nameHome" type="text" autocomplete="name" placeholder="Ex.: Maria Aparecida dos Santos" value="${esc(state.name)}">
+    <span class="hint">O nome aparece no registro de conclusão da trilha.</span></div>
+  <div class="actions">${cta}</div>
+  <p class="note">Conteúdo baseado no treinamento de Reforma Tributária para Finanças realizado em 23/10/2026, com base na EC 132/2023, na LC 214/2025 e na LC 227/2026. Alíquotas citadas são estimativas e podem mudar. Seu progresso fica salvo neste navegador.</p>`;
+}
+
+function renderLesson(i){
+  const m = MODULES[i], st = state.mods[i];
+  const status = st.passed ? `<span class="pill ok">Aprovado com ${pctTxt(st.best)}</span>` : st.attempts ? `<span class="pill bad">Ainda não aprovado · melhor nota ${pctTxt(st.best)}</span>` : "";
+  const nextBtn = st.passed && i<MODULES.length-1 ? `<button class="btn" data-go="${i+1}">Ir para o Módulo ${i+2}</button>` : st.passed && allPassed() ? `<button class="btn" data-cert>Ver registro de conclusão</button>` : "";
+  return `<span class="eyebrow">Módulo ${i+1} de ${MODULES.length}</span>
+  <h2>${esc(m.title)}</h2>
+  <p class="meta">Leitura de ${m.mins} min · ${m.qs.length} questões · aprovação com ${Math.ceil(m.qs.length*PASS)} acertos ${status}</p>
+  <div class="read">${m.lesson}</div>
+  <div class="actions">${nextBtn}<button class="btn ${st.passed?"ghost":""}" data-quiz="${i}">${st.passed?"Refazer avaliação":"Fazer a avaliação do módulo"}</button></div>`;
+}
+
+function startQuiz(i){
+  const m = MODULES[i];
+  quiz = { mod:i, idx:0, items: shuffle(m.qs.map((_,k)=>k)).map(k=>({k, order: shuffle([0,1,2,3]), pick:null})) };
+  view = {screen:"quiz", mod:i}; render();
+}
+function renderQuiz(){
+  const m = MODULES[quiz.mod], it = quiz.items[quiz.idx], q = m.qs[it.k], total = quiz.items.length;
+  const answered = quiz.items.filter(x=>x.pick!==null).length;
+  const opts = it.order.map((o,n)=>`<label class="opt" for="opt-${n}"><input type="radio" name="opt" id="opt-${n}" value="${o}" ${it.pick===o?"checked":""}><span>${esc(q.o[o])}</span></label>`).join("");
+  const last = quiz.idx===total-1;
+  const dots = quiz.items.map((x,n)=>`<button class="dot ${x.pick!==null?"ans":""} ${n===quiz.idx?"cur":""}" data-jump="${n}" aria-label="Questão ${n+1}">${n+1}</button>`).join("");
+  return `<div class="qhead"><span class="eyebrow">Avaliação · Módulo ${quiz.mod+1}: ${esc(m.title)}</span><span class="meta">${answered} de ${total} respondidas</span></div>
+  <div class="qprog"><i style="width:${(quiz.idx+1)/total*100}%"></i></div>
+  <p class="meta">Questão ${quiz.idx+1} de ${total}</p>
+  <p class="qtext" id="qtext">${esc(q.q)}</p>
+  <fieldset class="opts" aria-labelledby="qtext">${opts}</fieldset>
+  <div class="actions">
+    <button class="btn quiet" data-prev ${quiz.idx===0?"disabled":""}>Anterior</button>
+    ${last ? `<button class="btn" data-submit ${answered<total?"disabled":""}>Enviar respostas</button>` : `<button class="btn" data-next ${it.pick===null?"disabled":""}>Próxima</button>`}
+    <button class="btn ghost" data-go="${quiz.mod}">Voltar ao conteúdo</button>
+  </div>
+  ${last && answered<total ? `<p class="hint">Responda todas as questões para enviar. Faltam ${total-answered}.</p>` : ""}
+  <div class="dots" aria-label="Ir para a questão">${dots}</div>`;
+}
+
+function submitQuiz(){
+  const m = MODULES[quiz.mod];
+  const res = quiz.items.map(x=>({k:x.k, pick:x.pick, ok:x.pick===0}));
+  const right = res.filter(r=>r.ok).length, score = right/res.length, passed = score>=PASS-1e-9;
+  const st = state.mods[quiz.mod];
+  st.attempts++; st.best = Math.max(st.best, score); if(passed) st.passed = true;
+  if(allPassed() && !state.completedAt){ state.completedAt = new Date().toISOString(); }
+  save();
+  view = {screen:"result", mod:quiz.mod, res, right, score, passed};
+  quiz = null; render();
+}
+function renderResult(){
+  const {mod, res, right, score, passed} = view, m = MODULES[mod], need = Math.ceil(m.qs.length*PASS);
+  const ring = `<div class="ring" style="--p:${Math.round(score*100)};--c:${passed?"var(--ok-fill)":"var(--bad)"}"><div>${pctTxt(score)}</div></div>`;
+  let body;
+  if(passed){
+    body = `<h3>Gabarito comentado</h3><ol class="review">${res.map(r=>{const q=m.qs[r.k];return `<li class="${r.ok?"right":"wrong"}">
+      <p class="rq">${esc(q.q)}</p>
+      ${r.ok?"":`<p class="ra"><span class="no">Sua resposta:</span> ${esc(q.o[r.pick])}</p>`}
+      <p class="ra"><span class="yes">Resposta correta:</span> ${esc(q.o[0])}</p>
+      <p class="why">${esc(q.w)}</p></li>`;}).join("")}</ol>`;
+  } else {
+    const wrong = res.filter(r=>!r.ok);
+    body = `<h3>Questões a revisar</h3><p class="read">Releia o conteúdo do módulo com atenção a estes pontos. Na nova tentativa, a ordem das questões e das alternativas muda.</p>
+      <ol class="review">${wrong.map(r=>`<li class="wrong"><p class="rq">${esc(m.qs[r.k].q)}</p></li>`).join("")}</ol>`;
+  }
+  const next = passed ? (mod<MODULES.length-1 ? `<button class="btn" data-go="${mod+1}">Ir para o Módulo ${mod+2}</button>` : `<button class="btn" data-cert>Ver registro de conclusão</button>`)
+    : `<button class="btn" data-go="${mod}">Revisar o conteúdo</button><button class="btn ghost" data-quiz="${mod}">Refazer avaliação</button>`;
+  return `<span class="eyebrow">Resultado · Módulo ${mod+1}</span>
+  <div class="score">${ring}<div><h2>${passed?"Aprovado":"Ainda não foi desta vez"}</h2>
+    <p class="meta">${right} de ${res.length} acertos. ${passed?`A aprovação pede ${need}.`:`Para aprovar, são necessários ${need} acertos.`}</p>
+    <span class="pill ${passed?"ok":"bad"}">${passed?"Módulo concluído":"Não aprovado"}</span></div></div>
+  <div class="actions">${next}</div>${body}`;
+}
+
+/* ---------- conclusão ---------- */
+function hash(s){ let h=2166136261; for(const c of s){ h^=c.codePointAt(0); h=Math.imul(h,16777619);} return (h>>>0).toString(36).toUpperCase().padStart(7,"0"); }
+const recCode = () => "RT-FIN-" + hash(state.name.trim().toLowerCase()+"|"+state.completedAt).slice(0,4) + "-" + hash(state.completedAt+"|"+Math.round(finalScore()*100)).slice(0,4);
+const fmtDate = d => d.toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit",year:"numeric"});
+function spaced(ctx, text, x, y, sp){ if("letterSpacing" in ctx){ ctx.letterSpacing=sp+"px"; ctx.fillText(text,x,y); ctx.letterSpacing="0px"; } else ctx.fillText(text,x,y); }
+function wrap(ctx, text, maxW){ const words=text.split(" "), lines=[]; let line=""; for(const w of words){ const t=line?line+" "+w:w; if(ctx.measureText(t).width>maxW && line){lines.push(line); line=w;} else line=t; } if(line) lines.push(line); return lines; }
+async function drawRecord(){
+  try{ await Promise.all(["600 60px Outfit","500 30px Outfit","400 30px Outfit","400 30px Literata","500 26px 'IBM Plex Mono'"].map(f=>document.fonts.load(f))); }catch(e){}
+  const W=1654, H=2339, c=document.createElement("canvas"); c.width=W; c.height=H; const x=c.getContext("2d");
+  const P="#642277", P2="#864893", LIL="#D4ABCC", INK="#22152A", MUT="#6A5873", LINE="#E2D5E6", SOFT="#F4EDF5";
+  const M=130, CW=W-2*M, now=new Date(), done=new Date(state.completedAt||Date.now());
+  x.fillStyle="#FFFFFF"; x.fillRect(0,0,W,H);
+  // cabeçalho
+  x.fillStyle=P; x.fillRect(0,0,W,250);
+  x.fillStyle="#FFFFFF"; x.font="600 64px Outfit, sans-serif"; x.fillText("Rede Américas",M,150);
+  x.fillStyle=LIL; x.font="500 24px Outfit, sans-serif"; x.textAlign="right"; spaced(x,"ÁREA DE REFORMA TRIBUTÁRIA",W-M,138,5); x.textAlign="left";
+  // título
+  x.fillStyle=P2; x.font="600 24px Outfit, sans-serif"; spaced(x,"REGISTRO DE CONCLUSÃO",M,380,6);
+  x.fillStyle=INK; x.font="600 58px Outfit, sans-serif"; x.fillText("Registro de conclusão de treinamento",M,460);
+  x.fillStyle=INK; x.font="400 30px Literata, Georgia, serif";
+  let y=550; for(const l of wrap(x,"A Área de Reforma Tributária da Rede Américas registra que o(a) participante abaixo concluiu a trilha de capacitação indicada, com aprovação mínima de 70% na avaliação de cada módulo.",CW)){ x.fillText(l,M,y); y+=48; }
+  // campos
+  y+=40;
+  const fields=[["Participante",state.name.trim()],["Trilha",TRAIL],["Data de conclusão",fmtDate(done)],["Aproveitamento final",Math.round(finalScore()*100)+"%"],["Módulos concluídos",`${MODULES.length} de ${MODULES.length} (${MODULES.length*10} questões)`],["Código do registro",recCode()]];
+  fields.forEach(([k,v],i)=>{
+    const rowH=92, ry=y+i*rowH;
+    if(i%2===0){ x.fillStyle=SOFT; x.fillRect(M,ry,CW,rowH); }
+    x.fillStyle=MUT; x.font="500 26px Outfit, sans-serif"; x.fillText(k,M+28,ry+56);
+    x.fillStyle=INK; x.font=(k==="Código do registro"?"500 28px 'IBM Plex Mono', monospace":(k==="Participante"?"600 34px Outfit, sans-serif":"400 32px Outfit, sans-serif"));
+    let fs=34, val=v; const vx=M+460, vw=CW-460-28;
+    while(x.measureText(val).width>vw && fs>20){ fs-=2; x.font=x.font.replace(/\d+px/,fs+"px"); }
+    x.fillText(val,vx,ry+56);
+  });
+  y+=fields.length*92+90;
+  // tabela de módulos
+  x.fillStyle=P2; x.font="600 24px Outfit, sans-serif"; spaced(x,"DESEMPENHO POR MÓDULO",M,y,6); y+=40;
+  const c2=M+CW-360, c3=M+CW-28;
+  x.fillStyle=MUT; x.font="500 24px Outfit, sans-serif"; y+=34;
+  x.fillText("Módulo",M+28,y); x.textAlign="right"; x.fillText("Melhor nota",c2+120,y); x.fillText("Tentativas",c3,y); x.textAlign="left";
+  y+=24; x.fillStyle=INK; x.fillRect(M,y,CW,2);
+  MODULES.forEach((m,i)=>{ const st=state.mods[i]; const ry=y+i*76;
+    x.fillStyle=INK; x.font="400 30px Outfit, sans-serif"; x.fillStyle=P2; x.fillText(String(i+1).padStart(2,"0"),M+28,ry+52);
+    x.fillStyle=INK; x.fillText(m.title,M+90,ry+52);
+    x.textAlign="right"; x.font="500 30px Outfit, sans-serif"; x.fillText(Math.round(st.best*100)+"%",c2+120,ry+52); x.font="400 30px Outfit, sans-serif"; x.fillText(String(st.attempts),c3,ry+52); x.textAlign="left";
+    x.fillStyle=LINE; x.fillRect(M,ry+76,CW,2);
+  });
+  // rodapé
+  const fy=H-210; x.fillStyle=LINE; x.fillRect(M,fy,CW,2);
+  x.fillStyle=MUT; x.font="400 24px Outfit, sans-serif";
+  x.fillText(`Documento gerado em ${fmtDate(now)} às ${now.toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"})}, a partir da trilha online de capacitação.`,M,fy+50);
+  x.fillText("Conteúdo baseado no treinamento de Reforma Tributária para Finanças de 23/10/2026.",M,fy+90);
+  x.fillText("Este documento é um registro de participação e aproveitamento; não constitui certificado.",M,fy+130);
+  return c;
+}
+async function saveFile(filename, blob){
+  if(window.claude && typeof window.claude.use==="function"){
+    try{
+      const dl = await window.claude.use("downloads");
+      if(dl){ await dl.save({filename, data: blob}); toast("Registro salvo."); return; }
+    }catch(e){
+      if(e && e.code==="declined"){ toast("Download cancelado."); return; }
+      if(e && e.code==="rate_limited"){ toast("Já existe um download aguardando confirmação."); return; }
+      toast("Não foi possível baixar o arquivo nesta visualização."); return;
+    }
+  }
+  const url = URL.createObjectURL(blob), a = document.createElement("a");
+  a.href=url; a.download=filename; document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(url),5000);
+}
+async function downloadRecord(){
+  if(!state.name.trim()){ toast("Informe seu nome completo antes de baixar."); return; }
+  if(!window.jspdf){ toast("O gerador de PDF não carregou. Recarregue a página e tente de novo."); return; }
+  const c = await drawRecord(); const pdf = new window.jspdf.jsPDF({orientation:"portrait", unit:"mm", format:"a4"});
+  pdf.addImage(c.toDataURL("image/jpeg",0.94),"JPEG",0,0,210,297);
+  pdf.setProperties({title:"Registro de conclusão - "+TRAIL, author:"Rede Américas - Área de Reforma Tributária"});
+  await saveFile("Registro de conclusao RT Financas - "+state.name.trim().replace(/[\\/:*?"<>|]/g,"")+".pdf", pdf.output("blob"));
+}
+function renderCert(){
+  if(!allPassed()){
+    const pend = MODULES.map((m,i)=>state.mods[i].passed?"":`<li>Módulo ${i+1}: ${esc(m.title)}</li>`).join("");
+    return `<span class="eyebrow">Conclusão</span><h2>Ainda faltam módulos</h2>
+    <div class="locked read"><p>A trilha é concluída com aprovação, de pelo menos 70%, em todos os módulos. Faltam:</p><ul>${pend}</ul></div>`;
+  }
+  const date = new Date(state.completedAt || Date.now()).toLocaleDateString("pt-BR",{day:"numeric",month:"long",year:"numeric"});
+  const name = state.name.trim();
+  const rows = MODULES.map((m,i)=>{ const st=state.mods[i]; return `<tr><td>${i+1}. ${esc(m.title)}</td><td class="n">${pctTxt(st.best)}</td><td class="n">${st.attempts}</td></tr>`; }).join("");
+  return `<span class="eyebrow">Registro de conclusão</span><h2>Trilha concluída</h2>
+  <p class="lead">${name?esc(name)+" concluiu":"Você concluiu"} os ${MODULES.length} módulos da trilha ${TRAIL}, com aprovação em todas as avaliações.</p>
+  <div class="record">
+    <div><span>Participante</span><b>${name?esc(name):"Nome não informado"}</b></div>
+    <div><span>Concluída em</span><b>${date}</b></div>
+    <div><span>Aproveitamento</span><b>${pctTxt(finalScore())}</b></div>
+    <div><span>Código do registro</span><b class="mono">${recCode()}</b></div>
+  </div>
+  <div class="field"><label for="nameCert">Nome completo no registro</label><input id="nameCert" type="text" autocomplete="name" placeholder="Digite seu nome" value="${esc(state.name)}"><span class="hint">Confira a grafia antes de baixar.</span></div>
+  <div class="actions"><button class="btn" data-record>Baixar registro de conclusão (PDF)</button></div>
+  <div class="tbl"><table><thead><tr><th>Módulo</th><th class="n">Melhor nota</th><th class="n">Tentativas</th></tr></thead><tbody>${rows}</tbody></table></div>
+  <p class="note">O aproveitamento é a média da melhor nota de cada módulo. Guarde o PDF como comprovante de que você realizou o treinamento.</p>`;
+}
+
+/* ---------- render e eventos ---------- */
+function render(){
+  const p = $("#page");
+  p.innerHTML = view.screen==="home" ? renderHome() : view.screen==="lesson" ? renderLesson(view.mod) : view.screen==="quiz" ? renderQuiz() : view.screen==="result" ? renderResult() : renderCert();
+  renderRail();
+}
+function go(screen, mod){ view = {screen, mod}; render(); window.scrollTo({top:0}); $("#page").focus({preventScroll:true}); }
+
+document.addEventListener("click", e=>{
+  const b = e.target.closest("button"); if(!b || b.disabled) return;
+  if(b.dataset.go!==undefined) return go("lesson", +b.dataset.go);
+  if(b.hasAttribute("data-cert")) return go("cert");
+  if(b.dataset.quiz!==undefined){ startQuiz(+b.dataset.quiz); window.scrollTo({top:0}); return; }
+  if(b.hasAttribute("data-next")){ quiz.idx++; render(); return; }
+  if(b.hasAttribute("data-prev")){ quiz.idx--; render(); return; }
+  if(b.dataset.jump!==undefined){ quiz.idx=+b.dataset.jump; render(); return; }
+  if(b.hasAttribute("data-submit")) return submitQuiz();
+  if(b.hasAttribute("data-record")) return downloadRecord();
+});
+document.addEventListener("change", e=>{
+  if(e.target.name==="opt" && quiz){ quiz.items[quiz.idx].pick = +e.target.value; render(); const r=document.querySelector('input[name="opt"]:checked'); if(r) r.focus(); }
+});
+document.addEventListener("change", e=>{ if(e.target.id==="nameCert" && view.screen==="cert") render(); });
+document.addEventListener("input", e=>{
+  if(e.target.id==="nameHome" || e.target.id==="nameCert"){ state.name = e.target.value; save(); }
+});
+document.querySelector(".brand").addEventListener("click", ()=>go("home"));
+document.querySelector(".brand").style.cursor="pointer";
+render();
+</script>
+</body>
+</html>

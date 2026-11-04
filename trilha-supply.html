@@ -1,0 +1,859 @@
+<!doctype html>
+<html lang="pt-BR" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Supply na Reforma | Rede Américas</title>
+<style>:root{color-scheme:light}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=Literata:opsz,wght@7..72,400;7..72,600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+/* Layout: caderno de trilha — índice de módulos à esquerda (vira faixa no celular), página de leitura/avaliação à direita */
+:root{
+  --bg:#F6F2F7; --surface:#FFFFFF; --surface-2:#EFE7F1; --ink:#22152A; --muted:#66546F; --line:#E2D5E6;
+  --accent:#642277; --accent-2:#864893; --accent-soft:#F1E4F3; --on-accent:#FFFFFF;
+  --ok:#3D7A10; --ok-fill:#76C42B; --ok-soft:#E7F5DA; --bad:#B0243C; --bad-soft:#FBE5E9; --sand:#B3B394; --sand-soft:#F1F1E8;
+  --f-display:"Outfit", "Segoe UI", system-ui, sans-serif;
+  --f-read:"Literata", Georgia, "Times New Roman", serif;
+  --f-mono:"IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
+  --radius:10px;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#151018; --surface:#1E1623; --surface-2:#291F2F; --ink:#F2EAF4; --muted:#B9A8C0; --line:#3A2C42;
+  --accent:#CB93D6; --accent-2:#A368AA; --accent-soft:#33233B; --on-accent:#1A0F1E;
+  --ok:#A3DD6A; --ok-fill:#76C42B; --ok-soft:#21301A; --bad:#FF93A6; --bad-soft:#3B1C25; --sand:#C9C9A9; --sand-soft:#2A2A22;
+  color-scheme:dark }}
+:root[data-theme="dark"]{
+  --bg:#151018; --surface:#1E1623; --surface-2:#291F2F; --ink:#F2EAF4; --muted:#B9A8C0; --line:#3A2C42;
+  --accent:#CB93D6; --accent-2:#A368AA; --accent-soft:#33233B; --on-accent:#1A0F1E;
+  --ok:#A3DD6A; --ok-fill:#76C42B; --ok-soft:#21301A; --bad:#FF93A6; --bad-soft:#3B1C25; --sand:#C9C9A9; --sand-soft:#2A2A22;
+  color-scheme:dark }
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-display);font-size:15px;line-height:1.5;
+  padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px));padding-block:20px 48px}
+.app{max-width:1180px;margin:0 auto;display:grid;grid-template-columns:270px minmax(0,1fr);gap:28px;align-items:start}
+button{font:inherit;cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+/* Índice */
+.rail{position:sticky;top:calc(env(safe-area-inset-top, 0px) + 16px);display:flex;flex-direction:column;gap:18px}
+.brand{display:flex;flex-direction:column;gap:2px;padding:4px 2px}
+.brand b{font-weight:700;font-size:20px;letter-spacing:-.01em;color:var(--accent)}
+.brand span{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.meter{display:flex;flex-direction:column;gap:6px}
+.meter-row{display:flex;justify-content:space-between;font-size:13px;color:var(--muted)}
+.meter-row strong{color:var(--ink);font-variant-numeric:tabular-nums}
+.track{height:6px;border-radius:99px;background:var(--surface-2);overflow:hidden}
+.track i{display:block;height:100%;background:var(--accent);border-radius:99px;transition:width .4s}
+.mods{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:2px}
+.mod-btn{width:100%;display:grid;grid-template-columns:28px minmax(0,1fr);gap:10px;align-items:start;text-align:left;
+  background:transparent;border:0;border-radius:8px;padding:9px 8px;color:var(--ink)}
+.mod-btn:hover:not([disabled]){background:var(--surface-2)}
+.mod-btn[aria-current="true"]{background:var(--surface);box-shadow:inset 0 0 0 1px var(--line)}
+.mod-btn[disabled]{cursor:not-allowed;opacity:.55}
+.num{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;font-size:13px;font-weight:600;
+  border:1.5px solid var(--line);color:var(--muted);font-variant-numeric:tabular-nums}
+.done .num{background:var(--ok-fill);border-color:var(--ok-fill);color:#14230A}
+.open .num{border-color:var(--accent);color:var(--accent)}
+.mod-txt{display:flex;flex-direction:column;gap:1px;min-width:0}
+.mod-txt b{font-weight:500;font-size:14px;line-height:1.3}
+.mod-txt small{font-size:12px;color:var(--muted)}
+.mod-txt small.ok{color:var(--ok)}
+
+/* Página */
+.page{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:clamp(20px,4vw,44px);min-width:0}
+.eyebrow{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--accent-2);font-weight:600}
+h1{font-size:clamp(28px,4.2vw,42px);line-height:1.08;letter-spacing:-.02em;margin:10px 0 14px;text-wrap:balance;font-weight:600}
+h2{font-size:clamp(23px,3vw,30px);line-height:1.15;letter-spacing:-.015em;margin:8px 0 6px;text-wrap:balance;font-weight:600}
+h3{font-size:19px;line-height:1.25;margin:34px 0 8px;font-weight:600;text-wrap:balance}
+.meta{color:var(--muted);font-size:14px}
+.lead{font-family:var(--f-read);font-size:17px;line-height:1.65;max-width:66ch;color:var(--ink)}
+.read p,.read li{font-family:var(--f-read);font-size:16px;line-height:1.7;max-width:66ch}
+.read ul,.read ol{padding-left:1.2em;margin:8px 0}
+.read li{margin:4px 0}
+.read strong{font-weight:600}
+code,.mono{font-family:var(--f-mono);font-size:.88em;background:var(--surface-2);padding:1px 5px;border-radius:4px}
+.facts{display:flex;flex-wrap:wrap;gap:10px;margin:22px 0}
+.fact{display:flex;flex-direction:column;padding:12px 16px;border-radius:var(--radius);background:var(--surface-2);min-width:120px;flex:1 1 120px}
+.fact b{font-size:24px;font-weight:600;font-variant-numeric:tabular-nums;color:var(--accent)}
+.fact span{font-size:13px;color:var(--muted)}
+.field{display:flex;flex-direction:column;gap:6px;margin:22px 0 8px;max-width:520px}
+.field label{font-weight:500;font-size:14px}
+.field input{font:inherit;font-size:16px;padding:11px 13px;border-radius:8px;border:1.5px solid var(--line);background:var(--bg);color:var(--ink)}
+.field input:focus{border-color:var(--accent);outline:none}
+.hint{font-size:13px;color:var(--muted)}
+.actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:26px;align-items:center}
+.btn{border:0;border-radius:8px;padding:11px 18px;font-weight:600;font-size:15px;background:var(--accent);color:var(--on-accent)}
+.btn:hover{filter:brightness(1.08)}
+.btn[disabled]{opacity:.45;cursor:not-allowed;filter:none}
+.btn.ghost{background:transparent;color:var(--accent);box-shadow:inset 0 0 0 1.5px var(--accent)}
+.btn.quiet{background:var(--surface-2);color:var(--ink)}
+.note{font-size:13px;color:var(--muted);max-width:70ch;margin-top:26px;padding-top:16px;border-top:1px solid var(--line)}
+.callout{margin:18px 0;padding:14px 18px;border-radius:var(--radius);background:var(--accent-soft);max-width:70ch}
+.callout .tag{display:block;font-size:11px;letter-spacing:.14em;text-transform:uppercase;font-weight:600;color:var(--accent);margin-bottom:4px}
+.callout p{margin:4px 0}
+.callout.sand{background:var(--sand-soft)}
+.callout.sand .tag{color:var(--muted)}
+.tbl{overflow-x:auto;margin:14px 0;max-width:72ch}
+table{border-collapse:collapse;width:100%;font-size:14px}
+th,td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-weight:600;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+td.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.yes{color:var(--ok);font-weight:600}.no{color:var(--bad);font-weight:600}
+.pill{display:inline-block;font-size:12px;font-weight:600;padding:3px 10px;border-radius:99px}
+.pill.ok{background:var(--ok-soft);color:var(--ok)}.pill.bad{background:var(--bad-soft);color:var(--bad)}
+
+/* Linha do tempo */
+.tl{list-style:none;padding:0;margin:16px 0;display:flex;flex-direction:column;gap:0;max-width:70ch}
+.tl li{display:grid;grid-template-columns:96px minmax(0,1fr);gap:14px;padding:10px 0;border-bottom:1px solid var(--line)}
+.tl time{font-family:var(--f-mono);font-size:13px;color:var(--accent);font-weight:500;padding-top:2px}
+.tl p{margin:0;font-family:var(--f-read);font-size:15px;line-height:1.6}
+
+/* Gráfico de alíquota efetiva */
+.chart{margin:18px 0 6px;max-width:640px}
+.chart-legend{display:flex;flex-wrap:wrap;gap:14px;font-size:12px;color:var(--muted);margin-bottom:10px}
+.chart-legend i{display:inline-block;width:14px;height:0;border-top:2px dashed currentColor;vertical-align:middle;margin-right:6px}
+.chart-legend .lr{color:var(--bad)}.chart-legend .lp{color:var(--muted)}
+.bars{display:flex;flex-direction:column;gap:6px}
+.bar-row{display:grid;grid-template-columns:44px minmax(0,1fr) 54px;gap:10px;align-items:center;font-size:13px}
+.bar-row .y{font-family:var(--f-mono);color:var(--muted)}
+.bar-row .v{text-align:right;font-variant-numeric:tabular-nums;font-weight:600}
+.bar-track{position:relative;height:18px;background:var(--surface-2);border-radius:4px}
+.bar-track b{position:absolute;inset:0 auto 0 0;background:var(--accent-2);border-radius:4px}
+.bar-row.last .bar-track b{background:var(--accent)}
+.mark{position:absolute;top:-3px;bottom:-3px;border-left:2px dashed}
+.mark.r{border-color:var(--bad)}.mark.p{border-color:var(--muted)}
+.chart-axis{display:grid;grid-template-columns:44px minmax(0,1fr) 54px;gap:10px;font-size:11px;color:var(--muted);margin-top:4px}
+.chart-axis div{display:flex;justify-content:space-between;font-variant-numeric:tabular-nums}
+
+/* Avaliação */
+.qhead{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+.qprog{height:4px;background:var(--surface-2);border-radius:99px;margin:12px 0 24px;overflow:hidden}
+.qprog i{display:block;height:100%;background:var(--accent);transition:width .3s}
+.qtext{font-size:clamp(18px,2.4vw,22px);line-height:1.35;font-weight:500;margin:0 0 18px;max-width:62ch;text-wrap:pretty}
+.opts{display:flex;flex-direction:column;gap:10px;max-width:72ch;border:0;padding:0;margin:0}
+.opt{display:grid;grid-template-columns:22px minmax(0,1fr);gap:12px;align-items:start;padding:13px 16px;border-radius:var(--radius);
+  border:1.5px solid var(--line);background:var(--bg);cursor:pointer;transition:border-color .15s, background .15s}
+.opt:hover{border-color:var(--accent-2)}
+.opt input{margin:3px 0 0;width:18px;height:18px;accent-color:var(--accent)}
+.opt span{font-family:var(--f-read);font-size:15.5px;line-height:1.55}
+.opt:has(input:checked){border-color:var(--accent);background:var(--accent-soft)}
+.dots{display:flex;flex-wrap:wrap;gap:6px;margin-top:22px}
+.dot{width:28px;height:28px;border-radius:6px;border:1.5px solid var(--line);background:transparent;font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
+.dot.ans{background:var(--surface-2);color:var(--ink)}
+.dot.cur{border-color:var(--accent);color:var(--accent)}
+
+/* Resultado */
+.score{display:flex;align-items:center;gap:22px;flex-wrap:wrap;margin:14px 0 6px}
+.ring{--p:0;width:110px;height:110px;border-radius:50%;display:grid;place-items:center;
+  background:conic-gradient(var(--c) calc(var(--p)*1%), var(--surface-2) 0)}
+.ring div{width:84px;height:84px;border-radius:50%;background:var(--surface);display:grid;place-items:center;font-size:26px;font-weight:600;font-variant-numeric:tabular-nums}
+.review{list-style:none;padding:0;margin:20px 0 0;display:flex;flex-direction:column;gap:12px;max-width:76ch}
+.review li{padding:14px 16px;border-radius:var(--radius);background:var(--bg);border:1px solid var(--line)}
+.review li.wrong{border-left:4px solid var(--bad)}
+.review li.right{border-left:4px solid var(--ok-fill)}
+.review .rq{font-weight:500;margin:0 0 8px}
+.review .ra{font-family:var(--f-read);font-size:14.5px;margin:3px 0;line-height:1.55}
+.review .why{font-family:var(--f-read);font-size:14.5px;color:var(--muted);margin-top:8px;line-height:1.55}
+
+/* Conclusão */
+.record{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;margin:22px 0 8px;max-width:760px}
+.record div{padding:12px 16px;border-radius:var(--radius);background:var(--surface-2);display:flex;flex-direction:column;gap:2px;min-width:0}
+.record span{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.record b{font-size:18px;font-weight:600;overflow-wrap:anywhere;font-variant-numeric:tabular-nums}
+.locked{padding:16px 18px;background:var(--surface-2);border-radius:var(--radius);max-width:60ch}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom, 0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);
+  padding:10px 16px;border-radius:8px;font-size:14px;opacity:0;pointer-events:none;transition:opacity .2s;max-width:calc(100% - 32px)}
+.toast.show{opacity:1}
+
+@media (max-width:860px){
+  .app{grid-template-columns:minmax(0,1fr);gap:16px}
+  .rail{position:static}
+  .mods{flex-direction:row;overflow-x:auto;gap:6px;padding-bottom:4px;scroll-snap-type:x mandatory}
+  .mods li{flex:0 0 auto;scroll-snap-align:start}
+  .mod-btn{grid-template-columns:28px auto;max-width:220px;border:1px solid var(--line);background:var(--surface)}
+  .tl li{grid-template-columns:78px minmax(0,1fr)}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="rail" aria-label="Módulos da trilha">
+    <div class="brand"><b>Rede Américas</b><span>Reforma Tributária</span></div>
+    <div class="meter">
+      <div class="meter-row"><span>Progresso</span><strong id="meterTxt">0 de 6</strong></div>
+      <div class="track"><i id="meterBar" style="width:0%"></i></div>
+    </div>
+    <ul class="mods" id="mods"></ul>
+  </aside>
+  <main class="page" id="page" tabindex="-1"></main>
+</div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+const PASS = 0.7;
+const STORE = "ra-rt-trilha-supply-v1";
+const TRAIL = "Reforma Tributária em Supply";
+
+const MODULES = [
+{ title:"Fundamentos e novas regras da compra", short:"IVA dual, alíquotas e transição", mins:9,
+  lesson:`
+<p class="lead">A reforma em curso trata só da tributação sobre o consumo: PIS, Cofins, IPI, ICMS e ISS, justamente os tributos que hoje aparecem nas notas de compra. Imposto de renda, CSLL e contribuições sobre a folha ficam de fora. Para Supply, a mudança central é que o tributo pago na compra deixa de ser custo e passa a ser crédito.</p>
+<h3>Quem sai e quem entra</h3>
+<div class="tbl"><table><thead><tr><th>Hoje</th><th>Com a reforma</th><th>Competência</th></tr></thead><tbody>
+<tr><td>PIS, Cofins e IPI</td><td><strong>CBS</strong> (Contribuição sobre Bens e Serviços)</td><td>União</td></tr>
+<tr><td>ICMS e ISS</td><td><strong>IBS</strong> (Imposto sobre Bens e Serviços)</td><td>Estados, DF e municípios, de forma compartilhada</td></tr>
+<tr><td>—</td><td><strong>Imposto Seletivo</strong></td><td>União: bens prejudiciais à saúde ou ao meio ambiente</td></tr>
+</tbody></table></div>
+<p>O IBS não distingue mercadoria de serviço: incide sobre qualquer operação onerosa. Por isso a locação, que hoje não tem ICMS nem ISS, passa a ter IBS, e o tributo destacado vira crédito para o hospital.</p>
+<h3>Os quatro pilares</h3>
+<ol>
+<li><strong>Não cumulatividade plena:</strong> todo tributo pago na compra ligada à atividade vira crédito, salvo uso ou consumo pessoal.</li>
+<li><strong>Tributação por fora:</strong> IBS e CBS não entram na própria base nem incidem um sobre o outro. Um computador negociado por R$ 100 com 30% de tributo gera nota de R$ 130.</li>
+<li><strong>Tributação no destino:</strong> o IBS segue a alíquota do local do adquirente, não a do fornecedor.</li>
+<li><strong>Base ampla:</strong> alcança bens tangíveis e intangíveis e serviços.</li>
+</ol>
+<h3>Quatro regras que mudam a forma de comprar</h3>
+<div class="tbl"><table><thead><tr><th>Regra</th><th>Na prática</th></tr></thead><tbody>
+<tr><td>Crédito só existe se o fornecedor pagar (art. 47)</td><td>Negociar com fornecedores idôneos e pedir certidão negativa de débitos (CND) na negociação e na homologação</td></tr>
+<tr><td>Crédito automático, via apuração assistida (art. 46)</td><td>O fornecedor precisa estar apto a emitir nota com IBS e CBS, com CNPJ, classificação e valores corretos</td></tr>
+<tr><td>Alíquota do destino</td><td>Para o mesmo bem ou serviço, todo fornecedor do regime regular aplica a mesma alíquota. A exceção é o Simples Nacional</td></tr>
+<tr><td>Tributo por fora, sem gross-up</td><td>O tributo é somado ao preço. Negocie o valor sem tributo</td></tr>
+</tbody></table></div>
+<div class="callout"><span class="tag">Resultado</span><p>Alíquota uniforme, tributo por fora e crédito integral tornam o tributo neutro na negociação. A disputa entre fornecedores passa a ser no preço sem tributo, e a comparação, pelo <strong>custo líquido</strong>.</p></div>
+<h3>Alíquotas</h3>
+<p>Em 28/10/2026, o TCU propôs ao Senado a alíquota de referência de <strong>11,3% para a CBS</strong> em 2027. Antes disso, a estimativa era de cerca de 9,2%. O IBS é estimado pelo Comitê Gestor em <strong>18,7%</strong>, e a referência total fica em torno de <strong>30%</strong>. O Senado tem até 15/12/2026 para fixar a alíquota.</p>
+<ul>
+<li>Em 2027 e 2028: CBS de 11,2% mais IBS de teste de 0,1%, ou 11,3% no total.</li>
+<li>Reduções de 30%, 60% ou 100%, conforme o produto ou serviço. Serviços de saúde, medicamentos e dispositivos médicos têm redução de 60%: 12% em 2033 e 4,52% em 2027 e 2028.</li>
+</ul>
+<h3>Transição</h3>
+<div class="tbl"><table><thead><tr><th>Tributo</th><th>2027–2028</th><th>2029–2032</th><th>2033</th></tr></thead><tbody>
+<tr><td>PIS/Cofins</td><td>Extintos</td><td>—</td><td>—</td></tr>
+<tr><td>IPI</td><td>Zero, exceto para proteger a Zona Franca de Manaus</td><td>Zero</td><td>Zero</td></tr>
+<tr><td>CBS</td><td>Integral</td><td>Integral</td><td>Integral</td></tr>
+<tr><td>ICMS e ISS</td><td>Integrais, por dentro, como custo</td><td>90%, 80%, 70% e 60%</td><td>Extintos</td></tr>
+<tr><td>IBS</td><td>Teste, 0,1%</td><td>10% a 40% da referência</td><td>Integral</td></tr>
+</tbody></table></div>
+<div class="callout sand"><span class="tag">Dois sistemas em paralelo</span><p>Até 2032, ICMS (inclusive o diferencial de alíquota) e ISS continuam calculados por dentro e seguem como custo para o hospital, que não é contribuinte de ICMS. CBS e IBS entram na análise como tributos recuperáveis. Benefícios fiscais atuais também são reduzidos aos poucos, então o preço precisa ser analisado ano a ano.</p></div>
+<h3>Imposto Seletivo</h3>
+<p>Incide sobre bebidas açucaradas, bebidas alcoólicas e outros itens prejudiciais. É monofásico: cobrado uma vez, em geral do fabricante, e embutido no custo das etapas seguintes. <strong>Não gera crédito.</strong> Se aparecer numa compra, envolver o Fiscal.</p>
+<p class="hint">Alíquotas são estimativas e propostas; a CBS de 2027 depende da resolução do Senado.</p>`,
+  qs:[
+{q:"Quais tributos atuais são substituídos pelo IBS?", o:["ICMS e ISS","PIS, Cofins e IPI","IRPJ e CSLL","PIS, Cofins e ISS"], w:"O IBS substitui ICMS e ISS, com competência compartilhada entre estados, DF e municípios. A CBS substitui PIS, Cofins e IPI."},
+{q:"Por que a locação, que hoje não tem ICMS nem ISS, passa a ter IBS?", o:["Porque o IBS incide sobre operações onerosas","Porque passa a ser considerada mercadoria","Porque os municípios incluíram a locação no ISS","Porque o aluguel é uso e consumo pessoal"], w:"O IBS não distingue mercadoria de serviço. O tributo destacado no aluguel vira crédito para o hospital, preservando o custo líquido."},
+{q:"Um computador é negociado por R$ 100, com 30% de IBS e CBS. Qual é o valor da nota?", o:["R$ 130,00","R$ 100,00","R$ 142,86","R$ 123,00"], w:"Com o tributo por fora, a alíquota incide sobre o preço e é somada a ele. Não há gross-up, que hoje eleva a base porque o tributo integra o próprio cálculo."},
+{q:"Dois fornecedores do regime regular vendem o mesmo item para a mesma unidade. O que se pode afirmar sobre o IBS e a CBS?", o:["A alíquota é a mesma: vale a do destino","Vale a alíquota do estado de cada fornecedor","Cada fornecedor negocia a própria alíquota","O fornecedor de outro estado paga a metade"], w:"O IBS segue a alíquota do local do adquirente. Por isso o tributo fica neutro e a disputa passa a ser no preço sem tributo. A exceção é o fornecedor do Simples Nacional."},
+{q:"Qual alíquota da CBS para 2027 o TCU propôs ao Senado em 28/10/2026?", o:["11,3%","9,2%","18,7%","27,91%"], w:"A estimativa anterior era de cerca de 9,2%. O Senado tem até 15/12/2026 para fixar a alíquota. Somada ao IBS estimado de 18,7%, a referência fica em torno de 30%."},
+{q:"Qual é a alíquota estimada de IBS e CBS sobre medicamentos com redução de 60% em 2033?", o:["12%, que é 40% de 30%","30%, a alíquota cheia","4,52%, como em 2027","Zero"], w:"Com redução de 60%, paga-se 40% da referência estimada de 30%. Em 2027 e 2028, com 11,3%, a alíquota reduzida é de 4,52%."},
+{q:"Como ICMS e ISS entram na análise de preço entre 2027 e 2032?", o:["Seguem por dentro, como custo","Viram crédito integral desde 2027","São extintos em janeiro de 2027","Passam a ser calculados por fora"], w:"O hospital não é contribuinte de ICMS, e o ISS não gera crédito. Esses tributos, inclusive o diferencial de alíquota, caem de 2029 a 2032 e são extintos em 2033."},
+{q:"O que acontece com o IPI a partir de 2027?", o:["Vai a zero, salvo para proteger a Zona Franca","Passa a ser recuperável como crédito","É substituído pelo ICMS","Dobra para compensar o PIS/Cofins"], w:"O IPI é reduzido a zero, mas pode incidir sobre produtos concorrentes de itens fabricados na Zona Franca de Manaus."},
+{q:"O Imposto Seletivo aparece numa compra de bebidas açucaradas para a lanchonete. Como tratar?", o:["É custo, sem crédito; envolver o Fiscal","Gera crédito integral, como o IBS","Gera crédito de 60%","Deve ser abatido do preço na nota"], w:"O Imposto Seletivo é monofásico: cobrado uma vez na cadeia e embutido no custo das etapas seguintes. Não gera crédito."},
+{q:"Por que, com a reforma, a disputa entre fornecedores passa a ser no preço sem tributo?", o:["Porque o tributo fica neutro para quem compra","Porque o fornecedor deixa de pagar tributo","Porque o tributo passa a ser fixo em reais","Porque o hospital deixa de ser contribuinte"], w:"Alíquota uniforme no destino, tributo por fora e crédito integral fazem o tributo voltar como crédito. O que diferencia as propostas é o custo líquido."}
+]},
+
+{ title:"Fornecedores e custo líquido", short:"Regimes, Simples e fluxo de negociação", mins:10,
+  lesson:`
+<p class="lead">Para IBS e CBS, o fornecedor estará em apenas dois caminhos: <strong>Simples Nacional</strong> ou <strong>regime regular</strong>. É isso que define o crédito de quem compra e, portanto, o custo real de cada proposta.</p>
+<h3>Regimes vigentes e o que muda</h3>
+<div class="tbl"><table><thead><tr><th>Regime</th><th>Hoje</th><th>Após a reforma</th></tr></thead><tbody>
+<tr><td>Simples Nacional</td><td>Até R$ 4,8 mi de faturamento; guia única (DAS) com alíquotas progressivas</td><td>IBS e CBS dentro do DAS ou, por opção, no regime regular</td></tr>
+<tr><td>Lucro Presumido</td><td>Até R$ 78 mi; PIS/Cofins cumulativo (3,65%), sem crédito</td><td>IBS e CBS no regime regular, com crédito amplo</td></tr>
+<tr><td>Lucro Real</td><td>Acima de R$ 78 mi; PIS/Cofins não cumulativo (9,25%)</td><td>IBS e CBS no regime regular, com crédito amplo</td></tr>
+</tbody></table></div>
+<p>O regime de lucro continua valendo para IRPJ e CSLL. Um fornecedor do Presumido, que hoje cobra 3,65% sem gerar crédito, passa a destacar IBS e CBS integralmente: o valor da nota pode subir, mas o custo líquido tende a cair.</p>
+<h3>Fornecedor do Simples Nacional</h3>
+<div class="tbl"><table><thead><tr><th></th><th>Simples tradicional</th><th>Simples híbrido</th></tr></thead><tbody>
+<tr><td>Como recolhe</td><td>IBS e CBS dentro do DAS</td><td>IBS e CBS no regime regular; demais tributos no Simples (art. 41, § 3º)</td></tr>
+<tr><td>Crédito do hospital</td><td>Limitado ao IBS/CBS efetivamente pago no DAS (art. 47, § 9º, II)</td><td>Valor integral destacado na nota</td></tr>
+</tbody></table></div>
+<p>Se a guia de um fornecedor do Simples tem 4% e 2% dela correspondem a IBS e CBS, o crédito fica limitado a 2%. Como a alíquota depende do faturamento, é preciso perguntar.</p>
+<div class="callout sand"><span class="tag">Sem impor o híbrido</span><p>A migração para o híbrido é opção do fornecedor. Exigir crédito integral pode elevar o preço dele e comprometer sua viabilidade. A orientação é avaliar o Simples pelo custo líquido, sem impor a mudança. Em honorários médicos, a Rede optou por não exigir a migração.</p></div>
+<h3>Custo líquido</h3>
+<p><strong>Custo líquido = custo bruto − créditos de IBS e CBS recuperáveis.</strong> Hoje a decisão olha o valor total da nota; depois da reforma, o custo líquido.</p>
+<div class="tbl"><table><thead><tr><th>Cenário</th><th>Fornecedor</th><th class="n">Nota</th><th class="n">Crédito</th><th class="n">Custo líquido</th></tr></thead><tbody>
+<tr><td rowspan="2">Mesmo valor de nota</td><td>Regime regular</td><td class="n">R$ 100,00</td><td class="n">R$ 28,00</td><td class="n">R$ 72,00</td></tr>
+<tr><td>Simples tradicional</td><td class="n">R$ 100,00</td><td class="n">R$ 2,00</td><td class="n">R$ 98,00</td></tr>
+<tr><td rowspan="2">Mesmo custo líquido</td><td>Regime regular</td><td class="n">R$ 128,00</td><td class="n">R$ 28,00</td><td class="n">R$ 100,00</td></tr>
+<tr><td>Simples tradicional</td><td class="n">R$ 102,00</td><td class="n">R$ 2,00</td><td class="n">R$ 100,00</td></tr>
+</tbody></table></div>
+<p>Com a mesma nota de R$ 100, o Simples tradicional custa R$ 26 a mais. Uma proposta de R$ 128 do regime regular equivale a R$ 102 do Simples. O preço máximo aceitável de um fornecedor do Simples é menor. Valores ilustrativos: 28% no regime regular e 2% no DAS.</p>
+<h3>Fluxo de negociação</h3>
+<ol class="tl">
+<li><time>1</time><p>Solicitar a CND (ou positiva com efeitos de negativa) como documento da negociação.</p></li>
+<li><time>2</time><p>Perguntar o regime de tributação. Regime regular: crédito integral, com IBS e CBS destacados pela alíquota do destino.</p></li>
+<li><time>3</time><p>Simples Nacional: perguntar se é tradicional ou híbrido.</p></li>
+<li><time>4</time><p>Tradicional: perguntar a alíquota (crédito limitado ao DAS). Híbrido: crédito integral.</p></li>
+<li><time>5</time><p>Comparar as propostas pelo custo líquido e registrar CND, regime e alíquota no cadastro.</p></li>
+</ol>
+<div class="callout"><span class="tag">Idoneidade é critério de compra</span><p>Um fornecedor que parcela débitos, entra em recuperação judicial ou deixa de recolher impede o crédito da Rede. A CND ajuda, mas pode continuar negativa enquanto o débito ainda não foi inscrito em dívida ativa. Por isso o acompanhamento deve ser contínuo, não só na homologação.</p></div>
+<h3>Pedidos de reajuste "por causa da reforma"</h3>
+<p>Separe o efeito do tributo de reajustes comerciais. O aumento de tributo destacado volta como crédito; qualquer parcela não tributária aumenta o custo líquido. Prestadores com mão de obra intensiva têm poucos créditos próprios e tendem a pedir aumento: a negociação parte do preço sem tributo.</p>
+<h3>Maiores fornecedores da Rede</h3>
+<div class="tbl"><table><thead><tr><th>Grupo</th><th>Fornece</th><th>O que muda</th></tr></thead><tbody>
+<tr><td>CM Hospitalar (Viveo), ~45%</td><td>Medicamentos e materiais</td><td>Hoje ICMS 12% + DIFAL como custo; IBS/CBS com crédito quando houver tributo</td></tr>
+<tr><td>Onco Prod, ~39%</td><td>Oncológicos</td><td>Já classifica alíquota zero e redução de 60%; ICMS deixa de existir em 2033</td></tr>
+<tr><td>Amil, ~9%</td><td>Plano de saúde dos colaboradores</td><td>Regime específico; crédito igual ao débito da operadora</td></tr>
+<tr><td>Roche, ~8%</td><td>Medicamentos (fabricante)</td><td>PIS/Cofins monofásico (~12%) extinto em 2027: espaço para reduzir o preço</td></tr>
+</tbody></table></div>
+<p class="hint">Mais de 90% desse gasto é medicamento. Participações aproximadas, a validar.</p>`,
+  qs:[
+{q:"Para IBS e CBS, em quais caminhos um fornecedor poderá estar?", o:["Simples Nacional ou regime regular","Presumido, Real ou Simples","Cumulativo ou não cumulativo","Monofásico ou plurifásico"], w:"Presumido e Real continuam valendo para IRPJ e CSLL, mas para IBS e CBS os dois caminhos são Simples Nacional ou regime regular. É isso que define o crédito do comprador."},
+{q:"Qual é o crédito do hospital na compra de um fornecedor do Simples tradicional?", o:["Limitado ao IBS/CBS pago no DAS","O valor integral destacado na nota","Sempre 9,25% do valor da compra","Nenhum crédito, em qualquer caso"], w:"No Simples tradicional, IBS e CBS são recolhidos dentro do DAS, e o crédito se limita ao que foi efetivamente pago (art. 47, § 9º, II)."},
+{q:"O que caracteriza o Simples híbrido?", o:["IBS e CBS no regular; demais no Simples","Todos os tributos fora do Simples","Crédito limitado à metade do DAS","Opção exclusiva para médicos"], w:"O fornecedor permanece no Simples para os demais tributos, mas apura IBS e CBS no regime regular. O adquirente se credita do valor integral destacado."},
+{q:"Como se calcula o custo líquido de uma compra?", o:["Custo bruto menos créditos recuperáveis","Valor da nota sem o frete e o seguro","Valor da nota menos o ICMS destacado","Preço sem tributo somado ao ISS"], w:"A decisão de compra deixa de olhar o total da nota e passa a olhar quanto fica como custo depois dos créditos de IBS e CBS."},
+{q:"Com a mesma nota de R$ 100, quanto custa a mais o Simples tradicional no exemplo do treinamento?", o:["R$ 26: custo de R$ 98 contra R$ 72","Nada: as notas são iguais","R$ 2, o valor pago no DAS","R$ 28, o crédito do regime regular"], w:"O regular gera R$ 28 de crédito e o Simples, R$ 2. Por isso uma proposta de R$ 128 do regular equivale a R$ 102 do Simples."},
+{q:"Qual é o primeiro passo do fluxo de negociação proposto?", o:["Solicitar a CND do fornecedor","Exigir migração para o híbrido","Comparar só o valor das notas","Pedir desconto pela alíquota zero"], w:"Depois vêm o regime, a modalidade do Simples e a alíquota. Por fim, as propostas são comparadas pelo custo líquido e as informações vão para o cadastro."},
+{q:"Um fornecedor do Simples tradicional é estratégico para a Rede. Qual é a orientação?", o:["Avaliar pelo custo líquido, sem impor o híbrido","Exigir a migração para manter o contrato","Excluí-lo das próximas cotações","Aceitar o mesmo preço do regime regular"], w:"A migração é opção do fornecedor. Exigir crédito integral pode elevar o preço bruto e comprometer a viabilidade dele."},
+{q:"Por que a CND não basta para garantir o crédito?", o:["Pode seguir negativa antes da dívida ativa","Ela é emitida só uma vez por ano","Ela só vale para fornecedores do Simples","Ela substitui a nota fiscal"], w:"O débito recente pode ainda não ter sido inscrito. Por isso a regularidade do fornecedor precisa ser acompanhada de forma contínua."},
+{q:"Um prestador pede reajuste de 10% dizendo que a carga tributária aumentou. Como analisar?", o:["Separar o tributo recuperável do reajuste","Aceitar, porque a reforma aumenta a carga","Recusar, porque tributo não muda preço","Comparar só com o ISS atual"], w:"O aumento de tributo destacado volta como crédito. Qualquer parcela que não seja tributo aumenta o custo líquido e é negociação comercial."},
+{q:"Por que a compra direta da Roche abre espaço para reduzir o preço já em 2027?", o:["O PIS/Cofins monofásico de ~12% é extinto","O ICMS da operação é extinto em 2027","O medicamento passa a ter alíquota cheia","A Roche passa a ser do Simples Nacional"], w:"O PIS/Cofins concentrado no fabricante sai da nota em 2027. Com o mesmo preço sem tributos, o custo cai, e a redução deve ser negociada já."}
+]},
+
+{ title:"Não cumulatividade no hospital", short:"Crédito amplo, exceções e proteção do crédito", mins:10,
+  lesson:`
+<p class="lead">Hoje <strong>98,5% da receita</strong> da Rede está no PIS/Cofins cumulativo. Serviços hospitalares ficam nesse regime mesmo no lucro real (Lei 10.833/2003, art. 10, XIII): alíquota de 3,65%, mas nenhum crédito nas compras. Com a reforma, o regime cumulativo deixa de existir e o hospital passa a recuperar o tributo de quase tudo o que compra.</p>
+<h3>O tributo embutido na compra deixa de ser custo</h3>
+<div class="tbl"><table><thead><tr><th>Tributo na compra</th><th>Hoje, no hospital</th><th>Com a reforma</th></tr></thead><tbody>
+<tr><td>ICMS em materiais e medicamentos</td><td>Custo: o hospital não é contribuinte na atividade-fim</td><td>IBS, com crédito</td></tr>
+<tr><td>PIS/Cofins embutidos no preço</td><td>Custo: receitas no regime cumulativo</td><td>CBS, com crédito</td></tr>
+<tr><td>ISS nos serviços</td><td>Custo</td><td>IBS, com crédito</td></tr>
+<tr><td>IPI em equipamentos e materiais</td><td>Custo</td><td>Zero a partir de 2027</td></tr>
+<tr><td>Imposto Seletivo</td><td>Não existe</td><td>Custo, sem crédito</td></tr>
+</tbody></table></div>
+<p>Em 2027, o ganho vem da troca de PIS/Cofins pela CBS e do IPI zerado. ICMS e ISS continuam no preço até 2032.</p>
+<h3>Crédito amplo e suas exceções (LC 214, arts. 47 e 57)</h3>
+<ul>
+<li><strong>Regra geral:</strong> crédito de IBS e CBS em todas as aquisições de bens e serviços ligadas à atividade, inclusive indiretas: agulhas, gaze, computadores, mesas, cadeiras. Na importação, crédito dos tributos pagos no desembaraço.</li>
+<li><strong>Sem crédito, uso ou consumo pessoal:</strong> joias, obras de arte, bebidas alcoólicas, tabaco, armas, bens recreativos e estéticos; bens fornecidos sem ônus ou abaixo do mercado a sócios, administradores, empregados e parentes até o 3º grau; imóvel residencial e veículo cedidos, com seguro, combustível e manutenção.</li>
+<li><strong>Continuam gerando crédito:</strong> uniformes e fardamentos, EPI, alimentação e bebidas não alcoólicas fornecidas a empregados, benefícios de saúde, creche e educação nas condições da lei.</li>
+</ul>
+<div class="callout"><span class="tag">Panetone</span><p>Panetone, café e água na copa, consumidos durante o trabalho, são despesa da atividade e geram crédito. Panetone entregue a cada funcionário no fim do ano é consumo pessoal e não gera. Como a apuração assistida reconhece o crédito automaticamente, a requisição precisa sinalizar esse tipo de compra ao Fiscal, que ajusta no fechamento.</p></div>
+<h3>Outras regras de crédito</h3>
+<div class="tbl"><table><thead><tr><th>Situação</th><th>Crédito</th></tr></thead><tbody>
+<tr><td>Ativo imobilizado</td><td>Integral na aquisição, não pela depreciação; ressarcimento em até 60 dias. Sinalizar ao Fiscal, porque é controlado à parte</td></tr>
+<tr><td>Alíquota zero, isenção, pessoa física não contribuinte</td><td>Sem crédito, porque não há tributo</td></tr>
+<tr><td>Prova e prazo</td><td>Documento fiscal idôneo; apropriação em até 5 anos</td></tr>
+<tr><td>Perda por validade</td><td>O crédito da mercadoria perdida deve ser estornado</td></tr>
+</tbody></table></div>
+<p>O crédito não se perde por falta de débito no mês: a empresa pode ficar com saldo credor por meses, por exemplo durante a construção de um hospital, e usá-lo depois.</p>
+<h3>Débito na receita, crédito nas compras</h3>
+<p>Exemplo mensal com alíquota de 30% (2033):</p>
+<div class="tbl"><table><thead><tr><th></th><th class="n">R$</th></tr></thead><tbody>
+<tr><td>Receita de serviços de saúde</td><td class="n">1.000.000</td></tr>
+<tr><td>Débito (30% × 40% = 12%, redução de 60% do Anexo III)</td><td class="n">120.000</td></tr>
+<tr><td>Compras sem tributo: 250.000; crédito a 30%</td><td class="n">− 75.000</td></tr>
+<tr><td><strong>IBS + CBS a recolher</strong></td><td class="n"><strong>45.000</strong></td></tr>
+</tbody></table></div>
+<p>A redução na receita não obriga a estornar os créditos das compras (art. 47, § 10). Cada compra com tributo corretamente destacado reduz o que o hospital recolhe. Nota sem destaque, com alíquota errada ou de fornecedor que não recolheu não gera crédito.</p>
+<h3>Quando o crédito fica disponível</h3>
+<p>Uma nota emitida em 29/10 gera crédito potencial, mas o tributo do fornecedor vence no último dia do mês seguinte, 30/11. Só depois que ele paga a guia o sistema libera o crédito. A Rede paga o valor cheio da nota e arca com o tributo; se o fornecedor não recolher, o tributo vira custo.</p>
+<h3>Como proteger o crédito</h3>
+<ul>
+<li><strong>Split payment:</strong> o banco separa o tributo no pagamento e envia ao Fisco; o fornecedor recebe o líquido. Garante o crédito, mas só deve ser obrigatório a partir de 2028. Em 2027 não há essa proteção.</li>
+<li><strong>RAD (recolhimento pelo adquirente):</strong> a Rede recolhe o IBS/CBS da nota por guia e paga o líquido ao fornecedor. A lei não exige anuência, mas o contrato cobra o valor cheio, então é preciso acordo e previsão em contrato ou aditivo. O fornecedor continua responsável pelo tributo.</li>
+</ul>
+<div class="callout sand"><span class="tag">RAD é exceção</span><p>Use quando um fornecedor relevante não recolhe, mas a relação vale a pena por qualidade, prazo ou preço. A decisão envolve Jurídico, Fiscal e Financeiro, porque a Rede desembolsa o tributo. Sem alinhar com o contas a pagar, a nota pode ser paga pelo valor cheio e o tributo sair duas vezes.</p></div>`,
+  qs:[
+{q:"Por que hoje o tributo embutido nas compras é custo para o hospital?", o:["Receita cumulativa e hospital sem ICMS","O hospital é isento de PIS/Cofins","Os fornecedores não destacam tributo","A lei proíbe crédito para saúde"], w:"Os serviços hospitalares ficam no PIS/Cofins cumulativo, sem crédito, e o hospital não é contribuinte de ICMS na atividade-fim. O ISS também é cumulativo."},
+{q:"De onde vem o ganho nas compras em 2027?", o:["Da troca do PIS/Cofins pela CBS e do IPI zero","Da extinção imediata do ICMS e do ISS","Do fim do Imposto Seletivo nas compras","Do IBS integral, que já vale em 2027"], w:"ICMS e ISS continuam no preço até 2032. Em 2027, a CBS substitui o PIS/Cofins com crédito, e o IPI vai a zero."},
+{q:"A Rede compra panetones para deixar na copa durante o expediente. Há crédito?", o:["Sim: é consumo ligado à atividade","Não: todo alimento é uso pessoal","Só se houver convenção coletiva","Só sobre metade do valor"], w:"Consumo durante o trabalho é despesa da atividade. Panetones entregues a cada funcionário como presente seriam uso pessoal, sem crédito."},
+{q:"Qual destas compras NÃO gera crédito?", o:["Carro cedido a um gestor para uso pessoal","Uniformes e EPI das equipes","Agulhas e gaze para atendimento","Computadores do administrativo"], w:"Veículo cedido para uso pessoal entra na vedação do art. 57. Uniformes e EPI são exceção expressa e geram crédito."},
+{q:"Como é o crédito na compra de um equipamento para o ativo imobilizado?", o:["Integral na aquisição, controlado à parte","Pela depreciação, mês a mês, no balanço","Vedado, por ser um bem durável","Só na venda futura do equipamento"], w:"O crédito vem na compra. O Fiscal precisa ser avisado porque o ressarcimento de imobilizado tem regra própria, com prazo de até 60 dias."},
+{q:"No exemplo mensal, receita de R$ 1 mi com 12% e compras de R$ 250 mil com 30%. Quanto o hospital recolhe?", o:["R$ 45.000","R$ 120.000","R$ 75.000","R$ 195.000"], w:"Débito de R$ 120 mil menos crédito de R$ 75 mil. A redução de 60% na receita não obriga a estornar os créditos das compras."},
+{q:"Uma nota é emitida em 29/10. Quando o crédito fica disponível?", o:["Depois que o fornecedor paga a guia","No dia em que a nota é escriturada","No mesmo dia da emissão","Só no fim do exercício"], w:"O tributo do fornecedor vence no último dia do mês seguinte, 30/11. O sistema libera o crédito quando reconhece a quitação."},
+{q:"Um medicamento comprado com crédito vence no estoque e é descartado. O que acontece?", o:["O crédito deve ser estornado","O crédito é mantido integralmente","O crédito dobra como compensação","Nada, porque o crédito já foi usado"], w:"A perda por validade exige o estorno do crédito. Perdas de um frasco aberto e atribuído ao paciente foram tratadas como ponto defensável, a avaliar com o Fiscal."},
+{q:"Qual é a situação do split payment em 2027?", o:["Não haverá; previsão para 2028","Obrigatório desde janeiro","Só para importações","Substituído pelo RAD por lei"], w:"Em 2027 é preciso acompanhar o recolhimento do fornecedor. O split, quando vier, garante o crédito porque o banco retém o tributo."},
+{q:"Quando faz sentido usar o RAD?", o:["Com fornecedor relevante que não recolhe","Em toda compra, por padrão","Só com fornecedores do Simples","Para evitar a emissão da nota"], w:"É exceção: a Rede desembolsa o tributo, precisa de acordo em contrato e alinhamento com o contas a pagar para não pagar o tributo duas vezes."}
+]},
+
+{ title:"Mapa de aquisições do hospital", short:"Medicamentos, OPME, serviços e benefícios", mins:12,
+  lesson:`
+<p class="lead">O tratamento no IBS e na CBS depende do item, da classificação (NCM ou NBS), da destinação e dos anexos da LC 214/2025, e não do fornecedor. O mapa abaixo resume as oito categorias de gasto do hospital.</p>
+<div class="tbl"><table><thead><tr><th>Categoria</th><th>Tratamento</th><th>Crédito</th></tr></thead><tbody>
+<tr><td>1. Medicamentos</td><td>Zero (por destinação) ou redução de 60%</td><td>Sim, quando houver destaque</td></tr>
+<tr><td>2. Dispositivos médicos e OPME</td><td>60% (Anexo IV), zero (Anexo XII) ou padrão</td><td>Sim</td></tr>
+<tr><td>3. Materiais de consumo</td><td>Padrão, com exceções</td><td>Sim</td></tr>
+<tr><td>4. Serviços de apoio e facilities</td><td>Padrão</td><td>Sim, integral</td></tr>
+<tr><td>5. Serviços de saúde e mão de obra médica</td><td>60% (Anexo III); CLT fora do IBS/CBS</td><td>Sim; CLT sem tributo</td></tr>
+<tr><td>6. Locação, comodato e consignação</td><td>Segue o fornecimento efetivo</td><td>Sim, se oneroso</td></tr>
+<tr><td>7. Imóveis, utilidades e benefícios</td><td>Regimes específicos</td><td>Sim, com regras próprias</td></tr>
+<tr><td>8. Doações, bonificações e rebates</td><td>Sem incidência ou ajuste de base</td><td>Conforme o caso</td></tr>
+</tbody></table></div>
+<h3>1. Medicamentos</h3>
+<ul>
+<li><strong>Alíquota zero:</strong> registrados cuja destinação no registro está entre as previstas em lei (doenças raras e negligenciadas, oncologia, diabetes) e que constem da relação publicada a cada 120 dias pelo Ministério da Fazenda e pelo Comitê Gestor (art. 146).</li>
+<li><strong>Redução de 60%:</strong> demais medicamentos registrados na Anvisa, de manipulação, e nutrição enteral e parenteral (art. 133).</li>
+<li><strong>Alíquota padrão:</strong> produtos sem registro de medicamento, como suplementos e cosméticos fora dos anexos.</li>
+</ul>
+<p>Na nota, o <code>cClassTrib</code> indica o tratamento: <strong>200009</strong> alíquota zero, <strong>200032</strong> redução de 60% e <strong>000001</strong> tributação integral. No cadastro: registro Anvisa, validade, destinação e data da relação vigente.</p>
+<h3>2. Dispositivos médicos e OPME</h3>
+<ul>
+<li><strong>Anexo IV, redução de 60%:</strong> cerca de cem itens por NCM e descrição, como seringas, agulhas, cateteres, stents, marca-passos, luvas cirúrgicas e de procedimento, bolsas de colostomia e autoclaves.</li>
+<li><strong>Anexo XII, alíquota zero:</strong> lista curta de equipamentos de maior valor, como ultrassom, tomógrafo e laser.</li>
+<li><strong>Fora das listas, alíquota padrão:</strong> mesmo que pareça um item listado. Exemplo: instrumental de cirurgia robótica (NCM 9018.90.97).</li>
+</ul>
+<p>O benefício exige NCM e descrição no anexo e atendimento às normas da Anvisa. As listas são revisadas a cada 120 dias. Locar um equipamento segue a regra do produto.</p>
+<h3>3. Materiais de consumo</h3>
+<p>Escritório, TI e copa: padrão, crédito integral. Higiene e limpeza: padrão, alguns com 60% (conferir NCM). Alimentos da nutrição: cesta básica com alíquota zero (sem tributo e sem crédito), outros com 60%. Uniformes, EPI e enxoval: padrão, com crédito. Combustível: monofásico, com crédito pelo valor da nota quando ligado à atividade, como o das ambulâncias.</p>
+<h3>4. Serviços de apoio e facilities</h3>
+<p>Limpeza, lavanderia, nutrição, segurança, manutenção, engenharia clínica, TI e SaaS, resíduos e logística: hoje o ISS e o PIS/Cofins do prestador são custo; com a reforma, o prestador destaca IBS e CBS e o hospital credita o valor integral. A limpeza hospitalar pode ter enquadramento diferente da administrativa: cabe ao fornecedor fundamentar a classificação.</p>
+<h3>5. Serviços de saúde e mão de obra médica</h3>
+<div class="tbl"><table><thead><tr><th>Contratação</th><th>IBS e CBS</th><th>Crédito</th></tr></thead><tbody>
+<tr><td>Empregado CLT</td><td>Não incide</td><td>Não há tributo</td></tr>
+<tr><td>Empresa médica no regime regular</td><td>Redução de 60% (Anexo III)</td><td>Valor destacado</td></tr>
+<tr><td>Empresa médica no Simples</td><td>Dentro do DAS</td><td>Limitado ao DAS</td></tr>
+<tr><td>Cooperativa médica</td><td>Tributada na venda ao hospital</td><td>Valor destacado</td></tr>
+<tr><td>Autônomo com RPA</td><td>Contribuinte se houver habitualidade</td><td>Só com nota e destaque; RPA não basta</td></tr>
+</tbody></table></div>
+<h3>6. Locação, comodato e consignação</h3>
+<ul>
+<li><strong>OPME consignada:</strong> a remessa não gera crédito nem tributo. O tributo incide no fornecimento efetivo, com a nota de venda, em geral após a autorização de faturamento.</li>
+<li><strong>Comodato:</strong> remessa sem cobrança não é tributada; a cobrança ligada à operação pode ser.</li>
+<li><strong>Locação de equipamentos:</strong> passa a ser tributada pela alíquota do bem, com crédito. Locação de imóvel tem redução de 70%. Contratos mistos devem separar equipamento e insumo.</li>
+</ul>
+<h3>7. Imóveis, utilidades e benefícios</h3>
+<ul>
+<li>Aluguel de imóvel: regime específico; locador pessoa física não contribuinte não gera crédito. Taxa de condomínio, em regra, não gera.</li>
+<li>Energia, água, gás e telecom: geram crédito.</li>
+<li>Plano de saúde por acordo ou convenção coletiva: crédito igual ao débito da operadora. Vales refeição, alimentação e transporte: crédito igual ao débito da emissora. A previsão em convenção pode criar obrigações difíceis de reverter, então cada benefício é avaliado.</li>
+</ul>
+<h3>8. Doações, bonificações e rebates</h3>
+<div class="tbl"><table><thead><tr><th>Situação</th><th>Regra</th></tr></thead><tbody>
+<tr><td>Doação sem contrapartida</td><td>Não há incidência: sem tributo e sem crédito</td></tr>
+<tr><td>Doação com contrapartida (exclusividade, marca)</td><td>Operação onerosa; avaliar o contrato</td></tr>
+<tr><td>Bonificação na nota</td><td>Desconto incondicional, fora da base: pedir sempre na própria nota</td></tr>
+<tr><td>Rebate e bônus por volume</td><td>Desconto condicionado: integra a base. Nota de R$ 100 com bônus de R$ 5 continua tributada sobre R$ 100</td></tr>
+<tr><td>Transferência entre unidades</td><td>Mesmo contribuinte: sem incidência, mas exige nota</td></tr>
+<tr><td>Compra centralizada</td><td>Bem: IBS do local de entrega. Locação e demais: matriz. Indicar a unidade de entrega</td></tr>
+<tr><td>Pagamento antecipado</td><td>Tributo na data do pagamento, com nota de débito de pagamento antecipado</td></tr>
+</tbody></table></div>`,
+  qs:[
+{q:"O que determina se um medicamento tem alíquota zero?", o:["Registro, destinação e relação vigente","O preço do medicamento na tabela","O estado onde está o fornecedor","O regime tributário do fornecedor"], w:"A alíquota zero vale para medicamentos registrados com destinação prevista em lei (oncologia, doenças raras, diabetes) e que constem da relação publicada a cada 120 dias (art. 146)."},
+{q:"Qual cClassTrib indica redução de 60% num medicamento?", o:["200032","200009","000001","410999"], w:"200009 indica alíquota zero e 000001, tributação integral. O 410999 apareceu numa nota de comodato, sem incidência."},
+{q:"Seringas, cateteres e stents listados no Anexo IV têm qual tratamento?", o:["Redução de 60%","Alíquota zero","Alíquota padrão","Imposto Seletivo"], w:"O Anexo IV traz cerca de cem dispositivos com redução de 60%. O Anexo XII, com alíquota zero, é uma lista curta de equipamentos de maior valor."},
+{q:"Um instrumental de cirurgia robótica (NCM 9018.90.97) não consta dos anexos. Qual é a alíquota?", o:["A padrão, com crédito","Zero, por ser dispositivo médico","60%, por semelhança","Zero, se for importado"], w:"O benefício exige que o produto conste do anexo pela NCM e pela descrição. Parecer com um item listado não basta."},
+{q:"Como fica a contratação de médicos pela CLT?", o:["Não há IBS/CBS, nem crédito","Redução de 60%, com crédito","Alíquota padrão, com crédito","Tributada dentro do DAS"], w:"A relação de emprego está fora da incidência (art. 6º, I). Na escolha entre equipe própria e terceirizada, as duas opções devem ser comparadas pelo custo líquido."},
+{q:"Um médico autônomo habitual presta serviço com RPA. A Rede terá crédito?", o:["Só com nota fiscal e destaque","Sim, o RPA basta","Sim, pelo valor do RPA","Nunca, médico não gera crédito"], w:"Se for contribuinte, o autônomo precisa emitir nota fiscal. O RPA não serve como documento para o crédito."},
+{q:"Quando nasce o tributo numa OPME consignada?", o:["Na nota de venda, no fornecimento efetivo","Na remessa física ao hospital","Na devolução do item ao fornecedor","No pagamento feito pelo paciente"], w:"A remessa em consignação não gera crédito nem informa o uso ao Fisco. O tributo incide quando o fornecedor emite a nota de venda, em geral após a autorização de faturamento."},
+{q:"Como fica o crédito do plano de saúde dos colaboradores contratado por convenção coletiva?", o:["Igual ao débito apurado pela operadora","Alíquota padrão de 30% sobre a fatura","Sem crédito, por ser benefício pessoal","Redução de 60% sobre a fatura"], w:"A operadora está em regime específico. O contrato deve prever que ela informe o valor do débito que gera o crédito."},
+{q:"Um fornecedor oferece rebate de R$ 5 numa nota de R$ 100 ao atingir uma meta de volume. Sobre qual valor incide o tributo?", o:["R$ 100: o rebate é condicional","R$ 95: todo desconto reduz a base","R$ 105, somando o bônus","Nenhum, por ser bonificação"], w:"Desconto condicionado integra a base. Bonificação concedida na própria nota é incondicional e fica fora: por isso, pedir sempre o desconto na nota."},
+{q:"Numa compra centralizada de bens, qual IBS se aplica?", o:["O do local de entrega","O da matriz da Rede","O do estado do fornecedor","A média dos estados"], w:"Para bens, vale o local de entrega; para locação e demais serviços, a matriz. Por isso o pedido deve indicar a unidade de entrega."}
+]},
+
+{ title:"Aquisições nacionais e importações", short:"Notas reais, serviços e desembaraço", mins:11,
+  lesson:`
+<p class="lead">Cinco notas reais de 2026 foram recalculadas para 2027/2028 e para 2033, mantendo o preço sem tributos de cada fornecedor. Premissas: IBS e CBS de 11,3% em 2027 e 2028 (4,52% com redução de 60%) e cerca de 30% em 2033 (12% com redução); ICMS, inclusive o DIFAL, e ISS mantidos até 2032 como custo.</p>
+<h3>Resumo dos exemplos</h3>
+<div class="tbl"><table><thead><tr><th>Exemplo</th><th>Tratamento</th><th class="n">Hoje</th><th class="n">2027/28</th><th class="n">2033</th><th class="n">Variação</th></tr></thead><tbody>
+<tr><td>Enhertu (Onco Prod)</td><td>Alíquota zero</td><td class="n">313.584,60</td><td class="n">313.584,60</td><td class="n">241.460,14</td><td class="n">−23%</td></tr>
+<tr><td>Vesanoid (Onco Prod)</td><td>Redução de 60%</td><td class="n">22.442,52</td><td class="n">22.442,52</td><td class="n">17.280,74</td><td class="n">−23%</td></tr>
+<tr><td>Tremfya (CM Hospitalar)</td><td>Veio integral; esperado −60%</td><td class="n">117.340,36</td><td class="n">117.340,36</td><td class="n">93.285,59</td><td class="n">−20,5%</td></tr>
+<tr><td>Ocrevus (Roche, fabricante)</td><td>Alíquota zero</td><td class="n">75.673,51</td><td class="n">68.227,23</td><td class="n">54.606,00</td><td class="n">−28%</td></tr>
+<tr><td>Plano de saúde (Amil)</td><td>Regime específico</td><td>ISS + PIS/Cofins</td><td>ISS</td><td>Crédito = débito</td><td class="n">—</td></tr>
+</tbody></table></div>
+<p>Custo para o hospital, em R$. Leituras:</p>
+<ul>
+<li><strong>Alíquota zero não gera crédito:</strong> não há tributo destacado. O hospital também não adianta caixa ao fornecedor.</li>
+<li><strong>Redução de 60%:</strong> o IBS e a CBS reduzidos são pagos ao fornecedor e voltam como crédito. O desembolso é maior que o custo.</li>
+<li><strong>Distribuidores:</strong> até 2028 o custo pouco muda; o ganho vem com o fim do ICMS. <strong>Fabricante:</strong> o PIS/Cofins monofásico sai da nota em 2027, e a redução deve ser negociada já.</li>
+<li><strong>Classificação errada:</strong> Imjudo, Sarclisa, Yervoy, Orencia e Tremfya vieram da CM Hospitalar como 000001 (integral). Se ficar integral, o custo é o mesmo, mas a Rede paga mais caixa ao fornecedor e depende do crédito. Confirmar com o fornecedor antes de 2027.</li>
+</ul>
+<h3>Efeito da alíquota do item</h3>
+<div class="tbl"><table><thead><tr><th>Item de R$ 100 sem tributo</th><th class="n">Nota</th><th class="n">Crédito</th><th class="n">Custo</th></tr></thead><tbody>
+<tr><td>Alíquota padrão (30%)</td><td class="n">130,00</td><td class="n">30,00</td><td class="n">100,00</td></tr>
+<tr><td>Redução de 60% (12%)</td><td class="n">112,00</td><td class="n">12,00</td><td class="n">100,00</td></tr>
+<tr><td>Alíquota zero</td><td class="n">100,00</td><td class="n">0,00</td><td class="n">100,00</td></tr>
+</tbody></table></div>
+<p>O custo final é o mesmo; muda quanto se paga ao fornecedor e quanto se recupera. <strong>Destaque maior que o devido:</strong> o hospital paga mais e só recupera se nota e pagamento estiverem corretos. <strong>Destaque menor:</strong> o fornecedor fica exposto à cobrança do Fisco, que tende a voltar como pedido de repasse.</p>
+<h3>Contrato de limpeza na transição</h3>
+<div class="tbl"><table><thead><tr><th>R$ por mês</th><th class="n">Hoje</th><th class="n">2027</th><th class="n">2033</th></tr></thead><tbody>
+<tr><td>Preço sem tributos</td><td class="n">91.350</td><td class="n">91.350</td><td class="n">91.350</td></tr>
+<tr><td>ISS 5% (embutido)</td><td class="n">5.000</td><td class="n">5.000</td><td class="n">—</td></tr>
+<tr><td>PIS/Cofins 3,65% (embutidos)</td><td class="n">3.650</td><td class="n">—</td><td class="n">—</td></tr>
+<tr><td>IBS + CBS por fora</td><td class="n">—</td><td class="n">10.323</td><td class="n">27.405</td></tr>
+<tr><td><strong>Total da nota</strong></td><td class="n"><strong>100.000</strong></td><td class="n"><strong>106.673</strong></td><td class="n"><strong>118.755</strong></td></tr>
+<tr><td><strong>Custo líquido</strong></td><td class="n"><strong>100.000</strong></td><td class="n"><strong>96.350</strong></td><td class="n"><strong>91.350</strong></td></tr>
+</tbody></table></div>
+<p>O valor da nota sobe e o custo cai. Quem olhar só a nota terá a impressão de que o contrato ficou mais caro.</p>
+<h3>Importação de bens</h3>
+<div class="tbl"><table><thead><tr><th>Modalidade</th><th>Contribuinte</th><th>Crédito do hospital</th></tr></thead><tbody>
+<tr><td>Direta (usada pela Rede)</td><td>O hospital, que promove a entrada (art. 72)</td><td>IBS e CBS pagos no desembaraço</td></tr>
+<tr><td>Por conta e ordem</td><td>O adquirente; a trading presta serviço</td><td>IBS/CBS da importação e do serviço</td></tr>
+<tr><td>Por encomenda</td><td>A trading; o encomendante é solidário</td><td>IBS/CBS da nota de revenda</td></tr>
+</tbody></table></div>
+<ul>
+<li><strong>Base (art. 69):</strong> valor aduaneiro (mercadoria, frete e seguro até a entrada) + Imposto de Importação + Imposto Seletivo + Siscomex e AFRMM + antidumping e demais encargos. Não entram IPI, ICMS, ISS nem o próprio IBS e CBS.</li>
+<li><strong>Alíquota:</strong> a mesma do produto nacional, com os mesmos benefícios e condições (art. 71). Medicamento sem registro no Brasil pode perder a redução.</li>
+<li><strong>Pagamento (art. 76):</strong> até a entrega, como condição para liberar a carga; <strong>em dinheiro</strong>, não com créditos acumulados. O valor volta como crédito na apuração mensal. Em importações de alto valor, prever o caixa.</li>
+<li><strong>Despachante, armazenagem e frete até a unidade:</strong> serviços no país, que passam a ter IBS e CBS destacados e geram crédito.</li>
+<li><strong>Documento:</strong> além da declaração de importação, o crédito deve exigir nota fiscal de entrada da mercadoria importada, que os processos da Rede hoje não emitem. O fluxo está em definição.</li>
+</ul>
+<div class="callout"><span class="tag">Caso real: instrumental robótico</span><p>Valor aduaneiro de R$ 2,38 mi. Hoje, IPI e PIS/Cofins-Importação somam R$ 151,9 mil de custo. Em 2027, IBS e CBS de R$ 268,9 mil são pagos na liberação e recuperados; o custo tributário cai à taxa do Siscomex (R$ 223,64). Em 2033, R$ 714 mil pagos e recuperados.</p></div>
+<div class="tbl"><table><thead><tr><th>Tributo na importação</th><th>2027</th><th>2033</th></tr></thead><tbody>
+<tr><td>Imposto de Importação</td><td>Custo</td><td><strong>Custo</strong>: único que permanece</td></tr>
+<tr><td>IPI</td><td>Zero</td><td>Zero</td></tr>
+<tr><td>PIS/Cofins-Importação</td><td>Extintos</td><td>—</td></tr>
+<tr><td>CBS</td><td>Integral, com crédito</td><td>Integral, com crédito</td></tr>
+<tr><td>ICMS-importação</td><td>Custo</td><td>Extinto (cai de 2029 a 2032)</td></tr>
+<tr><td>IBS</td><td>Teste</td><td>Integral, com crédito</td></tr>
+</tbody></table></div>
+<p>Por isso, ex-tarifário e reduções de Imposto de Importação seguem relevantes: reduzem o II e, por consequência, a base do IBS e da CBS.</p>
+<h3>Importação de serviços</h3>
+<p>Suporte e manutenção remota do fabricante do robô, licenças e SaaS, laudos do exterior: quando o serviço é consumido no Brasil e o adquirente é contribuinte do regime regular, <strong>o hospital apura e recolhe</strong> o IBS e a CBS e apropria o mesmo valor como crédito (art. 64). Se o fornecedor estrangeiro não for cadastrado, o banco que fecha o câmbio retém o tributo na remessa (art. 23). IRRF, CIDE e IOF da remessa não fazem parte da reforma e seguem como custo.</p>`,
+  qs:[
+{q:"Enhertu tem alíquota zero. Por que o custo só cai em 2033?", o:["Porque o ICMS e o DIFAL só acabam em 2033","Porque o IBS começa a gerar crédito","Porque a alíquota zero só vale em 2033","Porque o PIS/Cofins sobe até 2032"], w:"Com alíquota zero, IBS e CBS não pesam, mas o ICMS de 12% mais DIFAL continua como custo até 2032. Em 2033 o custo cai 23%, se o preço sem tributos for mantido."},
+{q:"Uma compra com alíquota zero gera crédito?", o:["Não: não há tributo destacado","Sim: 12% do valor da nota","Sim: o mesmo da alíquota padrão","Só se o fornecedor for do Simples"], w:"Sem tributo, não há crédito. Em compensação, o hospital não adianta caixa de tributo ao fornecedor."},
+{q:"Tremfya veio com cClassTrib 000001 (integral), mas medicamento registrado tem, em regra, redução de 60%. Qual é o efeito se ficar integral?", o:["Mesmo custo, mas mais caixa pago e risco","Custo menor para a Rede","Perda total do crédito","Nenhum, porque o crédito compensa tudo"], w:"O custo final é o mesmo se tudo for pago e creditado, mas a Rede adianta mais tributo ao fornecedor e depende do recolhimento dele. A classificação deve ser confirmada com o fornecedor."},
+{q:"Por que a compra direta do fabricante Roche deve ter redução negociada já para 2027?", o:["O PIS/Cofins monofásico sai da nota em 2027","O ICMS é extinto em 2027","O IBS integral começa em 2027","O Imposto de Importação é zerado"], w:"O PIS/Cofins concentrado no fabricante (cerca de 12%) deixa de existir. Mantido o preço sem tributos, o custo cai 12% em 2027 e 28% em 2033."},
+{q:"No contrato de limpeza, a nota sobe de R$ 100.000 para R$ 106.673 em 2027. O que acontece com o custo líquido?", o:["Cai para R$ 96.350","Sobe para R$ 106.673","Fica em R$ 100.000","Sobe para R$ 118.755"], w:"O PIS/Cofins embutido sai e a CBS por fora volta como crédito. Em 2033, a nota chega a R$ 118.755 e o custo cai a R$ 91.350."},
+{q:"Na importação direta, quem é o contribuinte do IBS e da CBS?", o:["O hospital, que promove a entrada","O despachante aduaneiro contratado","O fornecedor estrangeiro do bem","O banco que fecha o câmbio"], w:"O despachante representa o hospital e não é contribuinte. Os honorários dele são serviço no país, com IBS e CBS e crédito."},
+{q:"O que NÃO entra na base do IBS e da CBS na importação?", o:["O ICMS","O Imposto de Importação","A taxa do Siscomex","O frete até o local de entrada"], w:"A base é o valor aduaneiro mais II, Imposto Seletivo, Siscomex, AFRMM e encargos. IPI, ICMS, ISS e os próprios IBS e CBS ficam fora."},
+{q:"Como é pago o IBS e a CBS na importação?", o:["Em dinheiro, até a liberação","Com créditos acumulados","Só na apuração do mês seguinte","Pelo fornecedor estrangeiro"], w:"O pagamento é condição para a entrega e não pode ser quitado com créditos acumulados (art. 76). O valor volta como crédito na apuração mensal, por isso o caixa precisa ser previsto."},
+{q:"Depois de 2033, qual tributo da importação continua sendo custo?", o:["O Imposto de Importação","A CBS paga na importação","O IBS pago na importação","O ICMS sobre a importação"], w:"IPI vai a zero, PIS/Cofins-Importação são extintos, ICMS acaba em 2033 e IBS/CBS geram crédito. Por isso ex-tarifário segue importante."},
+{q:"A Rede contrata suporte remoto do fabricante do robô, no exterior. Como fica o IBS e a CBS?", o:["O hospital recolhe e credita o mesmo valor","Não incide, por ser serviço estrangeiro","O fornecedor estrangeiro sempre recolhe","Vira custo, como o IRRF"], w:"Serviço consumido no Brasil é importação de serviço. Com adquirente contribuinte do regime regular, o hospital apura, recolhe e se credita. IRRF, CIDE e IOF seguem como custo."}
+]},
+
+{ title:"Custo líquido na prática e contratos", short:"Equalização, cláusulas, cadastro e recebimento", mins:10,
+  lesson:`
+<p class="lead">A mensagem do workshop cabe em três frases: <strong>compare pelo custo líquido, proteja o crédito e escreva a transição no contrato.</strong></p>
+<h3>Exercício: em nenhum caso a menor nota foi a melhor compra</h3>
+<div class="tbl"><table><thead><tr><th>Caso e proposta</th><th class="n">Desembolso</th><th class="n">Crédito</th><th class="n">Custo líquido</th><th>Decisão</th></tr></thead><tbody>
+<tr><td>Luvas · A regular (12%)</td><td class="n">56,00</td><td class="n">6,00</td><td class="n">50,00</td><td><strong>Escolher</strong></td></tr>
+<tr><td>Luvas · B Simples tradicional</td><td class="n">52,00</td><td class="n">1,04</td><td class="n">50,96</td><td></td></tr>
+<tr><td>Lavanderia · A regular</td><td class="n">130.000</td><td class="n">30.000</td><td class="n">100.000</td><td></td></tr>
+<tr><td>Lavanderia · B Simples híbrido</td><td class="n">126.100</td><td class="n">29.100</td><td class="n">97.000</td><td><strong>Escolher</strong></td></tr>
+<tr><td>Lavanderia · C Simples tradicional</td><td class="n">110.000</td><td class="n">3.300</td><td class="n">106.700</td><td></td></tr>
+<tr><td>Tomógrafo · A fabricante no exterior</td><td class="n">290.000</td><td class="n">60.000</td><td class="n">230.000</td><td></td></tr>
+<tr><td>Tomógrafo · B representante nacional</td><td class="n">279.500</td><td class="n">64.500</td><td class="n">215.000</td><td><strong>Escolher</strong></td></tr>
+</tbody></table></div>
+<p>No caso do tomógrafo, a proposta do exterior soma R$ 200 mil + R$ 60 mil de IBS/CBS (recuperáveis) + R$ 30 mil de IRRF, CIDE e IOF, que não voltam. Na lavanderia, a proposta C só empataria com a B com nota de R$ 100 mil.</p>
+<h3>Equalização, baseline e savings</h3>
+<ol>
+<li><strong>Comparar propostas pelo custo líquido.</strong> O fornecedor informa, em planilha padrão, preço sem tributo, regime, classificação do item e cada tributo destacado (IBS, CBS, IS e, até 2032, ICMS e ISS).</li>
+<li><strong>Recalcular o baseline.</strong> O contrato anterior é convertido para custo líquido nas regras do ano da nova compra. Um contrato de 2026 com PIS/Cofins embutido é comparado, em 2027, já sem esses tributos e com a CBS recuperável.</li>
+<li><strong>Saving de Compras:</strong> redução do custo líquido frente ao baseline recalculado. Inclui negociação de preço, escolha de fornecedor que gera mais crédito e redução de Imposto de Importação.</li>
+<li><strong>Efeito da reforma:</strong> variação causada só pela lei, como o fim do PIS/Cofins e do IPI. É reportada à parte e <strong>não entra na meta de savings</strong>.</li>
+</ol>
+<p class="hint">Proposta a validar com Controladoria e Tributário.</p>
+<h3>Seis cláusulas para contratos novos e renovações</h3>
+<div class="tbl"><table><thead><tr><th>Cláusula</th><th>Conteúdo</th></tr></thead><tbody>
+<tr><td>1. Preço sem tributo</td><td>Valor base e cada tributo descritos separadamente</td></tr>
+<tr><td>2. Transição com repasse</td><td>Ajuste a cada etapa de 2027 a 2033, nos dois sentidos</td></tr>
+<tr><td>3. Documento fiscal correto</td><td>Classificação, destaque e prazo de emissão como obrigação do fornecedor</td></tr>
+<tr><td>4. Crédito glosado</td><td>Fornecedor indeniza crédito perdido por erro ou falta de pagamento dele</td></tr>
+<tr><td>5. Regime e regularidade</td><td>Aviso prévio de mudança de regime e certidão em dia</td></tr>
+<tr><td>6. Retenção e compensação</td><td>Direito de reter pagamento até regularizar a nota</td></tr>
+</tbody></table></div>
+<p><strong>Revisar primeiro:</strong> contratos plurianuais de alto valor, mão de obra intensiva, Simples, consignação e comodato, importação e acordos com rebate. Redação final com o Jurídico. Em contratos sem definição de preço líquido ou bruto, o fornecedor pode tentar somar a CBS ao valor atual; a contraproposta é retirar o PIS/Cofins da base e aplicar o novo tributo sobre o preço líquido.</p>
+<h3>Cadastro e sistemas (Coupa, MV, Tasy, MXM)</h3>
+<div class="tbl"><table><thead><tr><th>Fornecedor</th><th>Material e serviço</th><th>Requisição e pedido</th></tr></thead><tbody>
+<tr><td>Regime de IBS/CBS; alíquota no DAS, se Simples tradicional; certidão e validade; domicílio no exterior; data da última atualização</td><td>NCM ou NBS; CST e cClassTrib; artigo e anexo do benefício; registro Anvisa, validade e destinação; importação e II</td><td>Preço sem tributo; IBS, CBS, IS, ICMS e ISS separados; custo líquido; unidade de entrega; Incoterm e frete</td></tr>
+</tbody></table></div>
+<div class="callout"><span class="tag">Regra</span><p>O cadastro mestre guarda a classificação aprovada pelo Tributário; o motor fiscal calcula alíquota e valores. <strong>A alíquota não é digitada no pedido.</strong></p></div>
+<h3>Recebimento: oito conferências que protegem o crédito</h3>
+<ol>
+<li>CNPJ do emitente e regime batem com o cadastro.</li>
+<li>Destinatário é a unidade que recebeu.</li>
+<li>NCM, CST e cClassTrib iguais ao cadastro.</li>
+<li>Alíquotas de IBS estadual, municipal e CBS do destino.</li>
+<li>Base sem IBS, CBS, ICMS, ISS e PIS/Cofins.</li>
+<li>Descontos incondicionais na própria nota.</li>
+<li>Valores conferem com o pedido.</li>
+<li>Registro Anvisa válido quando há benefício.</li>
+</ol>
+<p>Divergência: <strong>recusar ou pedir nota corrigida antes de lançar.</strong> Registro Anvisa vencido: a carta do fabricante vai para Regulatório e Tributário. Na importação, o mesmo vale para a DUIMP.</p>
+<h3>Riscos e controles</h3>
+<div class="tbl"><table><thead><tr><th>Risco</th><th>Controle</th></tr></thead><tbody>
+<tr><td>Escolher pela menor nota</td><td>Equalização obrigatória pelo custo líquido</td></tr>
+<tr><td>Fornecedor não paga o tributo</td><td>Certidão na homologação, cláusula de indenização e retenção</td></tr>
+<tr><td>Classificação errada no cadastro</td><td>Aprovação do Tributário, vigência e revisão a cada 120 dias</td></tr>
+<tr><td>Ganho da reforma fica com o fornecedor</td><td>Cláusula de transição com repasse e abertura de composição</td></tr>
+<tr><td>Importação sem caixa para o tributo</td><td>Previsão do IBS e da CBS pagos na liberação</td></tr>
+<tr><td>Crédito estornado por perda</td><td>Gestão de validade e inventário, com o estorno no custo</td></tr>
+</tbody></table></div>
+<h3>Próximos passos de Compras</h3>
+<ul>
+<li><strong>Coleta junto aos fornecedores:</strong> regime atual, carga atual e mudanças esperadas, produtos e serviços que geram ou deixam de gerar crédito, interpretação deles das LCs 214/2025 e 227/2026.</li>
+<li><strong>Revisão contratual:</strong> cláusulas de responsabilidade tributária e repasse, renegociação de faturamento e documentação fiscal, previsão da transição, riscos jurídicos e operacionais.</li>
+<li>Considerar a reforma em renovações, bids e revisões de fornecedores em andamento, com o time da reforma junto nos projetos principais.</li>
+</ul>`,
+  qs:[
+{q:"No exercício das luvas, A (regular) tem nota de R$ 56 e B (Simples tradicional), de R$ 52. Qual escolher?", o:["A: custo líquido de R$ 50,00","B: a nota é R$ 4 menor","Tanto faz: o produto é o mesmo","B: o Simples paga menos tributo"], w:"A gera R$ 6 de crédito e custa R$ 50,00. B gera só R$ 1,04 e custa R$ 50,96. Em nenhum caso do exercício a menor nota foi a melhor compra."},
+{q:"Na lavanderia, qual proposta tem o menor custo líquido?", o:["B, Simples híbrido: R$ 97.000","C, Simples tradicional: nota de R$ 110 mil","A, regime regular: R$ 100.000","As três empatam"], w:"O híbrido gera crédito integral. O Simples tradicional, com a menor nota, gera só R$ 3.300 de crédito e custa R$ 106.700."},
+{q:"Por que a proposta do tomógrafo vinda do exterior perdeu para a nacional?", o:["IRRF, CIDE e IOF não voltam como crédito","O IBS da importação não gera crédito","Importação sempre custa mais","O fabricante não aceita RAD"], w:"Os R$ 60 mil de IBS/CBS da importação voltam como crédito, mas os R$ 30 mil de IRRF, CIDE e IOF ficam como custo."},
+{q:"O fim do PIS/Cofins reduz o custo de um contrato em 2027. Isso entra na meta de savings?", o:["Não: é efeito da reforma, reportado à parte","Sim: toda redução de custo é saving","Sim, mas só metade do valor","Só se o contrato for renovado"], w:"Saving é a redução do custo líquido frente ao baseline recalculado, por negociação ou escolha de fornecedor. A variação causada só pela lei é reportada separadamente."},
+{q:"O que significa recalcular o baseline?", o:["Converter o contrato anterior a custo líquido","Usar o valor da última nota fiscal","Aplicar o IPCA ao contrato anterior","Somar a CBS ao preço antigo"], w:"Um contrato de 2026 com PIS/Cofins embutido é comparado, em 2027, já sem esses tributos e com a CBS recuperável."},
+{q:"O que prevê a cláusula de transição com repasse?", o:["Ajuste a cada etapa até 2033, nos dois sentidos","Reajuste anual do preço pelo IPCA","Repasse apenas dos aumentos de tributo","Congelamento do preço até 2033"], w:"A carga muda a cada ano até 2033. A cláusula evita que o ganho da reforma fique só com o fornecedor ou que a Rede absorva sozinha os aumentos."},
+{q:"O que diz a cláusula de crédito glosado?", o:["O fornecedor indeniza o crédito perdido","A Rede abre mão do crédito em disputa","O Fisco devolve o crédito ao fornecedor","O crédito passa à operadora"], w:"Se o crédito se perde por erro na nota ou falta de pagamento do fornecedor, ele indeniza a Rede. Complementa-se com o direito de reter pagamento até regularizar."},
+{q:"Onde fica a alíquota de IBS e CBS de um item?", o:["O motor fiscal calcula pelo cadastro","O comprador digita no pedido","O fornecedor informa por e-mail","O recebimento define na entrada"], w:"O cadastro mestre guarda a classificação aprovada pelo Tributário, e o sistema calcula alíquota e valores. A alíquota não é digitada no pedido."},
+{q:"No recebimento, a nota chega com cClassTrib diferente do cadastro. O que fazer?", o:["Recusar ou pedir correção antes de lançar","Lançar e ajustar no fechamento do mês","Lançar e depois corrigir o cadastro","Pagar só o valor sem o tributo"], w:"O recebimento é a última barreira antes de o crédito entrar na apuração. Divergência se resolve antes do lançamento."},
+{q:"Qual destes contratos deve ser revisado primeiro?", o:["Plurianual de mão de obra intensiva","Compra pontual de material de escritório","Assinatura mensal de jornal","Compra única de mobiliário"], w:"A prioridade é para plurianuais de alto valor, mão de obra intensiva, Simples, consignação e comodato, importação e acordos com rebate."}
+]}
+];
+
+/* ---------- estado ---------- */
+const blank = () => ({name:"", mods: MODULES.map(()=>({best:0, passed:false, attempts:0})), completedAt:null, code:null});
+function load(){ try{ const s = JSON.parse(localStorage.getItem(STORE)); if(s && Array.isArray(s.mods) && s.mods.length===MODULES.length) return s; }catch(e){} return null; }
+function save(){ try{ localStorage.setItem(STORE, JSON.stringify(state)); }catch(e){} }
+let state = load() || blank();
+let view = {screen:"home", mod:0};
+let quiz = null;
+
+const $ = s => document.querySelector(s);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const pctTxt = v => Math.round(v*100)+"%";
+const unlocked = i => i===0 || state.mods[i-1].passed;
+const allPassed = () => state.mods.every(m=>m.passed);
+const finalScore = () => state.mods.reduce((a,m)=>a+m.best,0)/MODULES.length;
+function shuffle(a){ a=a.slice(); for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]];} return a; }
+function toast(msg){ const t=$("#toast"); t.textContent=msg; t.classList.add("show"); clearTimeout(toast._t); toast._t=setTimeout(()=>t.classList.remove("show"),3200); }
+
+/* ---------- índice ---------- */
+function renderRail(){
+  const n = state.mods.filter(m=>m.passed).length;
+  $("#meterTxt").textContent = `${n} de ${MODULES.length}`;
+  $("#meterBar").style.width = (n/MODULES.length*100)+"%";
+  const items = MODULES.map((m,i)=>{
+    const st = state.mods[i], open = unlocked(i);
+    const cls = st.passed ? "done" : open ? "open" : "";
+    const sub = st.passed ? `<small class="ok">Aprovado · ${pctTxt(st.best)}</small>` : open ? `<small>${st.attempts? "Em andamento":"Disponível"}</small>` : `<small>Bloqueado</small>`;
+    const cur = (view.screen!=="home" && view.screen!=="cert" && view.mod===i);
+    return `<li class="${cls}"><button class="mod-btn" data-go="${i}" ${open?"":"disabled"} aria-current="${cur}">
+      <span class="num">${st.passed?"✓":i+1}</span><span class="mod-txt"><b>${esc(m.title)}</b>${sub}</span></button></li>`;
+  }).join("");
+  const done = allPassed();
+  const cert = `<li class="${done?"done":""}"><button class="mod-btn" data-cert ${done?"":"disabled"} aria-current="${view.screen==="cert"}">
+    <span class="num">★</span><span class="mod-txt"><b>Conclusão</b><small${done?' class="ok"':""}>${done?"Trilha concluída":"Após os 6 módulos"}</small></span></button></li>`;
+  $("#mods").innerHTML = items + cert;
+}
+
+/* ---------- telas ---------- */
+function nextModule(){ const i = state.mods.findIndex(m=>!m.passed); return i<0 ? null : i; }
+
+function renderHome(){
+  const nx = nextModule(), started = state.mods.some(m=>m.attempts>0);
+  const cta = nx===null ? `<button class="btn" data-cert>Ver minha conclusão</button>`
+    : `<button class="btn" data-go="${nx}">${started?"Continuar":"Começar"}: Módulo ${nx+1}</button>`;
+  return `<span class="eyebrow">Trilha de capacitação · Reforma Tributária</span>
+  <h1>${TRAIL}</h1>
+  <p class="lead">O que muda para Compras e Supply da Rede Américas com a chegada da CBS e do IBS: como comparar propostas pelo custo líquido, quando a compra gera crédito, como tratar cada categoria de gasto e importação, e o que escrever nos contratos.</p>
+  <div class="facts">
+    <div class="fact"><b>6</b><span>módulos em sequência</span></div>
+    <div class="fact"><b>60</b><span>questões, 10 por módulo</span></div>
+    <div class="fact"><b>70%</b><span>para aprovação (7 de 10)</span></div>
+    <div class="fact"><b>6/6</b><span>módulos para concluir a trilha</span></div>
+  </div>
+  <div class="read"><p>Cada módulo tem um texto de apoio e uma avaliação. O módulo seguinte só é liberado depois da aprovação no anterior. Se não atingir 70%, você vê quais questões errou, revisa o conteúdo e refaz a avaliação com as perguntas em nova ordem.</p></div>
+  <div class="field"><label for="nameHome">Seu nome completo</label>
+    <input id="nameHome" type="text" autocomplete="name" placeholder="Ex.: Maria Aparecida dos Santos" value="${esc(state.name)}">
+    <span class="hint">O nome aparece no registro de conclusão da trilha.</span></div>
+  <div class="actions">${cta}</div>
+  <p class="note">Conteúdo baseado no treinamento de Reforma Tributária para Supply realizado em 29/10/2026, com base na EC 132/2023, na LC 214/2025 e na LC 227/2026. Alíquotas citadas são estimativas e podem mudar. Seu progresso fica salvo neste navegador.</p>`;
+}
+
+function renderLesson(i){
+  const m = MODULES[i], st = state.mods[i];
+  const status = st.passed ? `<span class="pill ok">Aprovado com ${pctTxt(st.best)}</span>` : st.attempts ? `<span class="pill bad">Ainda não aprovado · melhor nota ${pctTxt(st.best)}</span>` : "";
+  const nextBtn = st.passed && i<MODULES.length-1 ? `<button class="btn" data-go="${i+1}">Ir para o Módulo ${i+2}</button>` : st.passed && allPassed() ? `<button class="btn" data-cert>Ver registro de conclusão</button>` : "";
+  return `<span class="eyebrow">Módulo ${i+1} de ${MODULES.length}</span>
+  <h2>${esc(m.title)}</h2>
+  <p class="meta">Leitura de ${m.mins} min · ${m.qs.length} questões · aprovação com ${Math.ceil(m.qs.length*PASS)} acertos ${status}</p>
+  <div class="read">${m.lesson}</div>
+  <div class="actions">${nextBtn}<button class="btn ${st.passed?"ghost":""}" data-quiz="${i}">${st.passed?"Refazer avaliação":"Fazer a avaliação do módulo"}</button></div>`;
+}
+
+function startQuiz(i){
+  const m = MODULES[i];
+  quiz = { mod:i, idx:0, items: shuffle(m.qs.map((_,k)=>k)).map(k=>({k, order: shuffle([0,1,2,3]), pick:null})) };
+  view = {screen:"quiz", mod:i}; render();
+}
+function renderQuiz(){
+  const m = MODULES[quiz.mod], it = quiz.items[quiz.idx], q = m.qs[it.k], total = quiz.items.length;
+  const answered = quiz.items.filter(x=>x.pick!==null).length;
+  const opts = it.order.map((o,n)=>`<label class="opt" for="opt-${n}"><input type="radio" name="opt" id="opt-${n}" value="${o}" ${it.pick===o?"checked":""}><span>${esc(q.o[o])}</span></label>`).join("");
+  const last = quiz.idx===total-1;
+  const dots = quiz.items.map((x,n)=>`<button class="dot ${x.pick!==null?"ans":""} ${n===quiz.idx?"cur":""}" data-jump="${n}" aria-label="Questão ${n+1}">${n+1}</button>`).join("");
+  return `<div class="qhead"><span class="eyebrow">Avaliação · Módulo ${quiz.mod+1}: ${esc(m.title)}</span><span class="meta">${answered} de ${total} respondidas</span></div>
+  <div class="qprog"><i style="width:${(quiz.idx+1)/total*100}%"></i></div>
+  <p class="meta">Questão ${quiz.idx+1} de ${total}</p>
+  <p class="qtext" id="qtext">${esc(q.q)}</p>
+  <fieldset class="opts" aria-labelledby="qtext">${opts}</fieldset>
+  <div class="actions">
+    <button class="btn quiet" data-prev ${quiz.idx===0?"disabled":""}>Anterior</button>
+    ${last ? `<button class="btn" data-submit ${answered<total?"disabled":""}>Enviar respostas</button>` : `<button class="btn" data-next ${it.pick===null?"disabled":""}>Próxima</button>`}
+    <button class="btn ghost" data-go="${quiz.mod}">Voltar ao conteúdo</button>
+  </div>
+  ${last && answered<total ? `<p class="hint">Responda todas as questões para enviar. Faltam ${total-answered}.</p>` : ""}
+  <div class="dots" aria-label="Ir para a questão">${dots}</div>`;
+}
+
+function submitQuiz(){
+  const m = MODULES[quiz.mod];
+  const res = quiz.items.map(x=>({k:x.k, pick:x.pick, ok:x.pick===0}));
+  const right = res.filter(r=>r.ok).length, score = right/res.length, passed = score>=PASS-1e-9;
+  const st = state.mods[quiz.mod];
+  st.attempts++; st.best = Math.max(st.best, score); if(passed) st.passed = true;
+  if(allPassed() && !state.completedAt){ state.completedAt = new Date().toISOString(); }
+  save();
+  view = {screen:"result", mod:quiz.mod, res, right, score, passed};
+  quiz = null; render();
+}
+function renderResult(){
+  const {mod, res, right, score, passed} = view, m = MODULES[mod], need = Math.ceil(m.qs.length*PASS);
+  const ring = `<div class="ring" style="--p:${Math.round(score*100)};--c:${passed?"var(--ok-fill)":"var(--bad)"}"><div>${pctTxt(score)}</div></div>`;
+  let body;
+  if(passed){
+    body = `<h3>Gabarito comentado</h3><ol class="review">${res.map(r=>{const q=m.qs[r.k];return `<li class="${r.ok?"right":"wrong"}">
+      <p class="rq">${esc(q.q)}</p>
+      ${r.ok?"":`<p class="ra"><span class="no">Sua resposta:</span> ${esc(q.o[r.pick])}</p>`}
+      <p class="ra"><span class="yes">Resposta correta:</span> ${esc(q.o[0])}</p>
+      <p class="why">${esc(q.w)}</p></li>`;}).join("")}</ol>`;
+  } else {
+    const wrong = res.filter(r=>!r.ok);
+    body = `<h3>Questões a revisar</h3><p class="read">Releia o conteúdo do módulo com atenção a estes pontos. Na nova tentativa, a ordem das questões e das alternativas muda.</p>
+      <ol class="review">${wrong.map(r=>`<li class="wrong"><p class="rq">${esc(m.qs[r.k].q)}</p></li>`).join("")}</ol>`;
+  }
+  const next = passed ? (mod<MODULES.length-1 ? `<button class="btn" data-go="${mod+1}">Ir para o Módulo ${mod+2}</button>` : `<button class="btn" data-cert>Ver registro de conclusão</button>`)
+    : `<button class="btn" data-go="${mod}">Revisar o conteúdo</button><button class="btn ghost" data-quiz="${mod}">Refazer avaliação</button>`;
+  return `<span class="eyebrow">Resultado · Módulo ${mod+1}</span>
+  <div class="score">${ring}<div><h2>${passed?"Aprovado":"Ainda não foi desta vez"}</h2>
+    <p class="meta">${right} de ${res.length} acertos. ${passed?`A aprovação pede ${need}.`:`Para aprovar, são necessários ${need} acertos.`}</p>
+    <span class="pill ${passed?"ok":"bad"}">${passed?"Módulo concluído":"Não aprovado"}</span></div></div>
+  <div class="actions">${next}</div>${body}`;
+}
+
+/* ---------- conclusão ---------- */
+function hash(s){ let h=2166136261; for(const c of s){ h^=c.codePointAt(0); h=Math.imul(h,16777619);} return (h>>>0).toString(36).toUpperCase().padStart(7,"0"); }
+const recCode = () => "RT-SUP-" + hash(state.name.trim().toLowerCase()+"|"+state.completedAt).slice(0,4) + "-" + hash(state.completedAt+"|"+Math.round(finalScore()*100)).slice(0,4);
+const fmtDate = d => d.toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit",year:"numeric"});
+function spaced(ctx, text, x, y, sp){ if("letterSpacing" in ctx){ ctx.letterSpacing=sp+"px"; ctx.fillText(text,x,y); ctx.letterSpacing="0px"; } else ctx.fillText(text,x,y); }
+function wrap(ctx, text, maxW){ const words=text.split(" "), lines=[]; let line=""; for(const w of words){ const t=line?line+" "+w:w; if(ctx.measureText(t).width>maxW && line){lines.push(line); line=w;} else line=t; } if(line) lines.push(line); return lines; }
+async function drawRecord(){
+  try{ await Promise.all(["600 60px Outfit","500 30px Outfit","400 30px Outfit","400 30px Literata","500 26px 'IBM Plex Mono'"].map(f=>document.fonts.load(f))); }catch(e){}
+  const W=1654, H=2339, c=document.createElement("canvas"); c.width=W; c.height=H; const x=c.getContext("2d");
+  const P="#642277", P2="#864893", LIL="#D4ABCC", INK="#22152A", MUT="#6A5873", LINE="#E2D5E6", SOFT="#F4EDF5";
+  const M=130, CW=W-2*M, now=new Date(), done=new Date(state.completedAt||Date.now());
+  x.fillStyle="#FFFFFF"; x.fillRect(0,0,W,H);
+  // cabeçalho
+  x.fillStyle=P; x.fillRect(0,0,W,250);
+  x.fillStyle="#FFFFFF"; x.font="600 64px Outfit, sans-serif"; x.fillText("Rede Américas",M,150);
+  x.fillStyle=LIL; x.font="500 24px Outfit, sans-serif"; x.textAlign="right"; spaced(x,"ÁREA DE REFORMA TRIBUTÁRIA",W-M,138,5); x.textAlign="left";
+  // título
+  x.fillStyle=P2; x.font="600 24px Outfit, sans-serif"; spaced(x,"REGISTRO DE CONCLUSÃO",M,380,6);
+  x.fillStyle=INK; x.font="600 58px Outfit, sans-serif"; x.fillText("Registro de conclusão de treinamento",M,460);
+  x.fillStyle=INK; x.font="400 30px Literata, Georgia, serif";
+  let y=550; for(const l of wrap(x,"A Área de Reforma Tributária da Rede Américas registra que o(a) participante abaixo concluiu a trilha de capacitação indicada, com aprovação mínima de 70% na avaliação de cada módulo.",CW)){ x.fillText(l,M,y); y+=48; }
+  // campos
+  y+=40;
+  const fields=[["Participante",state.name.trim()],["Trilha",TRAIL],["Data de conclusão",fmtDate(done)],["Aproveitamento final",Math.round(finalScore()*100)+"%"],["Módulos concluídos",`${MODULES.length} de ${MODULES.length} (${MODULES.length*10} questões)`],["Código do registro",recCode()]];
+  fields.forEach(([k,v],i)=>{
+    const rowH=92, ry=y+i*rowH;
+    if(i%2===0){ x.fillStyle=SOFT; x.fillRect(M,ry,CW,rowH); }
+    x.fillStyle=MUT; x.font="500 26px Outfit, sans-serif"; x.fillText(k,M+28,ry+56);
+    x.fillStyle=INK; x.font=(k==="Código do registro"?"500 28px 'IBM Plex Mono', monospace":(k==="Participante"?"600 34px Outfit, sans-serif":"400 32px Outfit, sans-serif"));
+    let fs=34, val=v; const vx=M+460, vw=CW-460-28;
+    while(x.measureText(val).width>vw && fs>20){ fs-=2; x.font=x.font.replace(/\d+px/,fs+"px"); }
+    x.fillText(val,vx,ry+56);
+  });
+  y+=fields.length*92+90;
+  // tabela de módulos
+  x.fillStyle=P2; x.font="600 24px Outfit, sans-serif"; spaced(x,"DESEMPENHO POR MÓDULO",M,y,6); y+=40;
+  const c2=M+CW-360, c3=M+CW-28;
+  x.fillStyle=MUT; x.font="500 24px Outfit, sans-serif"; y+=34;
+  x.fillText("Módulo",M+28,y); x.textAlign="right"; x.fillText("Melhor nota",c2+120,y); x.fillText("Tentativas",c3,y); x.textAlign="left";
+  y+=24; x.fillStyle=INK; x.fillRect(M,y,CW,2);
+  MODULES.forEach((m,i)=>{ const st=state.mods[i]; const ry=y+i*76;
+    x.fillStyle=INK; x.font="400 30px Outfit, sans-serif"; x.fillStyle=P2; x.fillText(String(i+1).padStart(2,"0"),M+28,ry+52);
+    x.fillStyle=INK; x.fillText(m.title,M+90,ry+52);
+    x.textAlign="right"; x.font="500 30px Outfit, sans-serif"; x.fillText(Math.round(st.best*100)+"%",c2+120,ry+52); x.font="400 30px Outfit, sans-serif"; x.fillText(String(st.attempts),c3,ry+52); x.textAlign="left";
+    x.fillStyle=LINE; x.fillRect(M,ry+76,CW,2);
+  });
+  // rodapé
+  const fy=H-210; x.fillStyle=LINE; x.fillRect(M,fy,CW,2);
+  x.fillStyle=MUT; x.font="400 24px Outfit, sans-serif";
+  x.fillText(`Documento gerado em ${fmtDate(now)} às ${now.toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"})}, a partir da trilha online de capacitação.`,M,fy+50);
+  x.fillText("Conteúdo baseado no treinamento de Reforma Tributária para Supply de 29/10/2026.",M,fy+90);
+  x.fillText("Este documento é um registro de participação e aproveitamento; não constitui certificado.",M,fy+130);
+  return c;
+}
+async function saveFile(filename, blob){
+  if(window.claude && typeof window.claude.use==="function"){
+    try{
+      const dl = await window.claude.use("downloads");
+      if(dl){ await dl.save({filename, data: blob}); toast("Registro salvo."); return; }
+    }catch(e){
+      if(e && e.code==="declined"){ toast("Download cancelado."); return; }
+      if(e && e.code==="rate_limited"){ toast("Já existe um download aguardando confirmação."); return; }
+      toast("Não foi possível baixar o arquivo nesta visualização."); return;
+    }
+  }
+  const url = URL.createObjectURL(blob), a = document.createElement("a");
+  a.href=url; a.download=filename; document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(url),5000);
+}
+async function downloadRecord(){
+  if(!state.name.trim()){ toast("Informe seu nome completo antes de baixar."); return; }
+  if(!window.jspdf){ toast("O gerador de PDF não carregou. Recarregue a página e tente de novo."); return; }
+  const c = await drawRecord(); const pdf = new window.jspdf.jsPDF({orientation:"portrait", unit:"mm", format:"a4"});
+  pdf.addImage(c.toDataURL("image/jpeg",0.94),"JPEG",0,0,210,297);
+  pdf.setProperties({title:"Registro de conclusão - "+TRAIL, author:"Rede Américas - Área de Reforma Tributária"});
+  await saveFile("Registro de conclusao RT Supply - "+state.name.trim().replace(/[\\/:*?"<>|]/g,"")+".pdf", pdf.output("blob"));
+}
+function renderCert(){
+  if(!allPassed()){
+    const pend = MODULES.map((m,i)=>state.mods[i].passed?"":`<li>Módulo ${i+1}: ${esc(m.title)}</li>`).join("");
+    return `<span class="eyebrow">Conclusão</span><h2>Ainda faltam módulos</h2>
+    <div class="locked read"><p>A trilha é concluída com aprovação, de pelo menos 70%, em todos os módulos. Faltam:</p><ul>${pend}</ul></div>`;
+  }
+  const date = new Date(state.completedAt || Date.now()).toLocaleDateString("pt-BR",{day:"numeric",month:"long",year:"numeric"});
+  const name = state.name.trim();
+  const rows = MODULES.map((m,i)=>{ const st=state.mods[i]; return `<tr><td>${i+1}. ${esc(m.title)}</td><td class="n">${pctTxt(st.best)}</td><td class="n">${st.attempts}</td></tr>`; }).join("");
+  return `<span class="eyebrow">Registro de conclusão</span><h2>Trilha concluída</h2>
+  <p class="lead">${name?esc(name)+" concluiu":"Você concluiu"} os ${MODULES.length} módulos da trilha ${TRAIL}, com aprovação em todas as avaliações.</p>
+  <div class="record">
+    <div><span>Participante</span><b>${name?esc(name):"Nome não informado"}</b></div>
+    <div><span>Concluída em</span><b>${date}</b></div>
+    <div><span>Aproveitamento</span><b>${pctTxt(finalScore())}</b></div>
+    <div><span>Código do registro</span><b class="mono">${recCode()}</b></div>
+  </div>
+  <div class="field"><label for="nameCert">Nome completo no registro</label><input id="nameCert" type="text" autocomplete="name" placeholder="Digite seu nome" value="${esc(state.name)}"><span class="hint">Confira a grafia antes de baixar.</span></div>
+  <div class="actions"><button class="btn" data-record>Baixar registro de conclusão (PDF)</button></div>
+  <div class="tbl"><table><thead><tr><th>Módulo</th><th class="n">Melhor nota</th><th class="n">Tentativas</th></tr></thead><tbody>${rows}</tbody></table></div>
+  <p class="note">O aproveitamento é a média da melhor nota de cada módulo. Guarde o PDF como comprovante de que você realizou o treinamento.</p>`;
+}
+
+/* ---------- render e eventos ---------- */
+function render(){
+  const p = $("#page");
+  p.innerHTML = view.screen==="home" ? renderHome() : view.screen==="lesson" ? renderLesson(view.mod) : view.screen==="quiz" ? renderQuiz() : view.screen==="result" ? renderResult() : renderCert();
+  renderRail();
+}
+function go(screen, mod){ view = {screen, mod}; render(); window.scrollTo({top:0}); $("#page").focus({preventScroll:true}); }
+
+document.addEventListener("click", e=>{
+  const b = e.target.closest("button"); if(!b || b.disabled) return;
+  if(b.dataset.go!==undefined) return go("lesson", +b.dataset.go);
+  if(b.hasAttribute("data-cert")) return go("cert");
+  if(b.dataset.quiz!==undefined){ startQuiz(+b.dataset.quiz); window.scrollTo({top:0}); return; }
+  if(b.hasAttribute("data-next")){ quiz.idx++; render(); return; }
+  if(b.hasAttribute("data-prev")){ quiz.idx--; render(); return; }
+  if(b.dataset.jump!==undefined){ quiz.idx=+b.dataset.jump; render(); return; }
+  if(b.hasAttribute("data-submit")) return submitQuiz();
+  if(b.hasAttribute("data-record")) return downloadRecord();
+});
+document.addEventListener("change", e=>{
+  if(e.target.name==="opt" && quiz){ quiz.items[quiz.idx].pick = +e.target.value; render(); const r=document.querySelector('input[name="opt"]:checked'); if(r) r.focus(); }
+});
+document.addEventListener("change", e=>{ if(e.target.id==="nameCert" && view.screen==="cert") render(); });
+document.addEventListener("input", e=>{
+  if(e.target.id==="nameHome" || e.target.id==="nameCert"){ state.name = e.target.value; save(); }
+});
+document.querySelector(".brand").addEventListener("click", ()=>go("home"));
+document.querySelector(".brand").style.cursor="pointer";
+render();
+</script>
+</body>
+</html>
