@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ficou com dúvida?</title>
+<style>
+  /* ====== EDITE AQUI ====== */
+  /* O link do botão fica no script, no fim do arquivo (LINK_DUVIDA). */
+  :root {
+    --lilas: #F4EAF4;
+    --roxo: #642277;
+    --roxo-escuro: #4A1959;
+    --texto: #2B1A33;
+    --texto-suave: #5E5566;
+  }
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: transparent;
+    font-family: "Segoe UI", "Segoe UI Web (West European)", -apple-system, BlinkMacSystemFont, Roboto, "Helvetica Neue", Arial, sans-serif;
+  }
+  .caixa {
+    box-sizing: border-box;
+    width: 100%;
+    background: var(--lilas);
+    border-radius: 14px;
+    padding: 22px 24px 24px;
+    display: flex;
+    flex-direction: column;
+  }
+  .icone {
+    width: 26px;
+    height: 26px;
+    color: var(--roxo);
+    margin-bottom: 12px;
+  }
+  h2 {
+    margin: 0 0 8px;
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--texto);
+    line-height: 1.3;
+  }
+  p {
+    margin: 0 0 20px;
+    font-size: 14px;
+    line-height: 1.5;
+    color: var(--texto-suave);
+  }
+  a.botao {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 44px;
+    border-radius: 8px;
+    background: var(--roxo);
+    color: #FFFFFF;
+    font-size: 15px;
+    font-weight: 600;
+    text-decoration: none;
+    transition: background .15s;
+  }
+  a.botao:hover { background: var(--roxo-escuro); }
+  a.botao:focus-visible { outline: 3px solid #76C42B; outline-offset: 2px; }
+</style>
+</head>
+<body>
+  <div class="caixa">
+    <svg class="icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true">
+      <path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"></path>
+    </svg>
+    <h2>Ficou com dúvida?</h2>
+    <p>Mande sua pergunta para o time da Reforma Tributária. A resposta pode virar conteúdo do próximo treinamento.</p>
+    <a class="botao" id="botao" href="#">Enviar dúvida</a>
+  </div>
+
+<script>
+  // ====== EDITE AQUI: destino do botão ======
+  // Pode ser um link do Microsoft Forms (https://forms.office.com/...)
+  // ou um e-mail no formato: mailto:time@redeamericas.com.br?subject=Dúvida%20treinamento
+  // Também dá para passar pela URL do iframe: duvidas.html?link=ENDERECO
+  var LINK_DUVIDA = "https://adhosp.sharepoint.com/sites/TreinamentosReformaTributria";
+
+  var param = new URLSearchParams(location.search).get("link");
+  var destino = param || LINK_DUVIDA;
+  var botao = document.getElementById("botao");
+  botao.href = destino;
+  if (destino.indexOf("mailto:") !== 0) {
+    botao.target = "_blank";
+    botao.rel = "noopener";
+  }
+</script>
+</body>
+</html>
